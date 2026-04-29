@@ -1,9 +1,6 @@
 # Custom HCL BigFix Web Reports
 
-A collection of custom Web Reports for HCL BigFix. Each report is a standalone
-`.beswrpt` XML file that can be imported into the BigFix Web Reports server.
-Some reports rely on a companion `.bes` analysis that must be activated in the
-BigFix console for the report to display data.
+A collection of custom Web Reports for HCL BigFix. Each report is a standalone `.beswrpt` XML file that can be imported into the BigFix Web Reports server. Some reports rely on a companion `.bes` analysis that must be activated in the BigFix console for the report to display data.
 
 ## Reports
 
@@ -16,41 +13,30 @@ BigFix console for the report to display data.
 
 ## Importing a report
 
-1. Sign in to your BigFix Web Reports server as a user with permission
-   to create custom reports.
-2. Click the **Report List** tab, then the **Import report** link just
-   below the tab bar.
+1. Sign in to your BigFix Web Reports server as a user with permission to create custom reports.
+2. Click the **Report List** tab, then the **Import report** link just below the tab bar.
 3. On the **Import Report** page:
-   - **Filename:** click **Choose File** and select the `.beswrpt` file
-     from this repository.
+   - **Filename:** click **Choose File** and select the `.beswrpt` file from this repository.
    - **Format:** leave set to **XML (*.beswrpt / *.webreport)** (the default).
-   - **Visibility:** choose **Public** (visible to all Web Reports users)
-     or **Private** (visible only to you).
+   - **Visibility:** choose **Public** (visible to all Web Reports users) or **Private** (visible only to you).
    - Click **Import**.
 4. Open the imported report from your Report List.
 
 ## Activating a companion analysis
 
-If a report has a companion `.bes` file (see the table above), the report will
-not populate data until that analysis is imported into the BigFix console and
-activated against the relevant computer group.
+If a report has a companion `.bes` file (see the table above), the report will not populate data until that analysis is imported into the BigFix console and activated against the relevant computer group.
 
 1. Open the BigFix console.
 2. **File → Import** the `.bes` file.
 3. Activate the analysis on the appropriate site / target group.
-4. Allow the next report cycle to complete, then open the corresponding
-   Web Report.
+4. Allow the next report cycle to complete, then open the corresponding Web Report.
 
 ## File format
 
-A `.beswrpt` file is an XML document (`<BESWebReport>`) whose `<Data>` element
-contains the HTML, CSS, and JavaScript that renders the report inside Web
-Reports. BigFix relevance and session-relevance queries are embedded in the
-HTML/JS and evaluated by the Web Reports server at runtime.
+A `.beswrpt` file is an XML document (`<BESWebReport>`) whose `<Data>` element contains the HTML, CSS, and JavaScript that renders the report inside Web Reports. BigFix relevance and session-relevance queries are embedded in the HTML/JS and evaluated by the Web Reports server at runtime.
 
 ## License
 
 Released under the MIT License — see [LICENSE](LICENSE).
 
-"HCL BigFix" and "BigFix" are trademarks of HCL Technologies. This project is
-not affiliated with or endorsed by HCL Technologies.
+"HCL BigFix" and "BigFix" are trademarks of HCL Technologies. This project is not affiliated with or endorsed by HCL Technologies.
