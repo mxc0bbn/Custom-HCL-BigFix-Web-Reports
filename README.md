@@ -48,15 +48,6 @@ contains the HTML, CSS, and JavaScript that renders the report inside Web
 Reports. BigFix relevance and session-relevance queries are embedded in the
 HTML/JS and evaluated by the Web Reports server at runtime.
 
-## Contributing
-
-New reports welcome. Please:
-
-- Keep each report self-contained in a single `.beswrpt` file.
-- Use a descriptive filename (e.g. `Patch_Compliance_By_Site.beswrpt`).
-- If your report depends on a companion analysis, include the `.bes` file
-  and add an entry under **Reports** above noting the pairing.
-
 ## License
 
 Released under the MIT License — see [LICENSE](LICENSE).
