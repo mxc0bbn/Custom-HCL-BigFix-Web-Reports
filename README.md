@@ -14,13 +14,20 @@ BigFix console for the report to display data.
 | `Relay_Cache_File_Analysis-v2.beswrpt` | Matched vs. orphaned relay cache files across servers/relays with multi-server and date-range filters, pagination, and on-demand loading. | `RelayCacheInventory.bes` |
 | `Windows Patch Compliance.beswrpt` | Windows patch compliance broken down by severity (Critical/Important/Moderate/Low) with OS and severity-range filters, pagination, and print/export. | `Relevant_Patches_Information_v3.bes` |
 
-## Installing a report
+## Importing a report
 
-1. Sign in to your BigFix Web Reports server as a user with permission to
-   create custom reports.
-2. Go to **Report List → New Report → Import**.
-3. Upload the desired `.beswrpt` file from this repository.
-4. Save, then open the report from your Report List.
+1. Sign in to your BigFix Web Reports server as a user with permission
+   to create custom reports.
+2. Click the **Report List** tab, then the **Import report** link just
+   below the tab bar.
+3. On the **Import Report** page:
+   - **Filename:** click **Choose File** and select the `.beswrpt` file
+     from this repository.
+   - **Format:** leave set to **XML (*.beswrpt / *.webreport)** (the default).
+   - **Visibility:** choose **Public** (visible to all Web Reports users)
+     or **Private** (visible only to you).
+   - Click **Import**.
+4. Open the imported report from your Report List.
 
 ## Activating a companion analysis
 
