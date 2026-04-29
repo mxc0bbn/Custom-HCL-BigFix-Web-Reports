@@ -1,0 +1,2059 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BESWebReport>
+    <Name>Multi-Action Group Deployment Status</Name>
+    <Description>MAG deployment results with 3D charts, on-demand per-group fetching, filtering, CSV export, and print.</Description>
+    <Type>CustomReport</Type>
+    <Category>Custom</Category>
+    <Source>Custom</Source>
+    <Data><![CDATA[
+<html>
+<head>
+<title>Multi-Action-Group Deployment Status</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f5f5f5;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    color: #27ae60;
+    margin-bottom: 5px;
+    font-size: 22px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* Selector bar */
+.selector-bar {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+}
+
+.selector-bar label {
+    font-weight: bold;
+    color: #27ae60;
+    font-size: 13px;
+    white-space: nowrap;
+    padding-top: 8px;
+}
+
+.selector-bar select {
+    flex: 1;
+    min-width: 250px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.selector-bar button {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 7px 18px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-top: 0px;
+    align-self: flex-start;
+}
+
+.selector-bar button:hover { background: #2ecc71; }
+.selector-bar button:disabled { background: #bdc3c7; cursor: default; }
+
+/* Summary cards */
+.summary-cards {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.summary-card {
+    flex: 1;
+    min-width: 150px;
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-left: 4px solid #ccc;
+}
+
+.summary-card.completed { border-left-color: #27ae60; background: rgba(39, 174, 96, 0.08); }
+.summary-card.notrelevant { border-left-color: #7f8c8d; background: rgba(127, 140, 141, 0.08); }
+.summary-card.failed { border-left-color: #c0392b; background: rgba(192, 57, 43, 0.08); }
+.summary-card.pending { border-left-color: #e67e22; background: rgba(230, 126, 34, 0.08); }
+.summary-card.total { border-left-color: #2980b9; background: rgba(41, 128, 185, 0.08); }
+
+.summary-card .card-value { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
+
+.summary-card.completed .card-value { color: #27ae60; }
+.summary-card.notrelevant .card-value { color: #7f8c8d; }
+.summary-card.failed .card-value { color: #c0392b; }
+.summary-card.pending .card-value { color: #e67e22; }
+.summary-card.total .card-value { color: #2980b9; }
+
+.summary-card .card-label { font-size: 12px; color: #666; text-transform: uppercase; }
+
+/* Clickable card states */
+.summary-card.clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+}
+
+.summary-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.summary-card.completed.active  { box-shadow: 0 0 0 2px #27ae60, 0 2px 8px rgba(0,0,0,0.12); }
+.summary-card.notrelevant.active{ box-shadow: 0 0 0 2px #7f8c8d, 0 2px 8px rgba(0,0,0,0.12); }
+.summary-card.failed.active     { box-shadow: 0 0 0 2px #c0392b, 0 2px 8px rgba(0,0,0,0.12); }
+.summary-card.pending.active    { box-shadow: 0 0 0 2px #e67e22, 0 2px 8px rgba(0,0,0,0.12); }
+.summary-card.total.active      { box-shadow: 0 0 0 2px #2980b9, 0 2px 8px rgba(0,0,0,0.12); }
+
+.filter-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 14px;
+}
+
+.filter-hint .active-filter-desc {
+    color: #2980b9;
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* Charts area */
+.charts-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.chart-box {
+    flex: 1;
+    min-width: 340px;
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.chart-box h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #27ae60;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.pie-container { display: flex; align-items: center; justify-content: center; gap: 30px; }
+.pie-svg { width: 220px; height: 200px; }
+.pie-legend { font-size: 13px; }
+.pie-legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+.pie-legend-color { width: 16px; height: 16px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
+
+.bar-chart-area { overflow-x: auto; }
+.bar-chart-svg { display: block; margin: 0 auto; }
+.bar-legend { display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 12px; }
+.bar-legend-item { display: flex; align-items: center; }
+.bar-legend-color { width: 14px; height: 14px; border-radius: 2px; margin-right: 6px; }
+
+/* Clickable chart element states */
+.chart-box svg path[data-clickable="1"],
+.chart-box svg rect[data-clickable="1"] {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.chart-box svg path[data-clickable="1"]:hover,
+.chart-box svg rect[data-clickable="1"]:hover {
+    opacity: 0.78;
+}
+
+/* Data table */
+.table-section {
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.table-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #27ae60;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.table-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.table-controls input { padding: 5px 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; width: 200px; }
+.table-controls select { padding: 5px 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }
+.table-controls .record-count { margin-left: auto; font-size: 12px; color: #666; }
+
+#reportTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+#reportTable th {
+    background: #27ae60;
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid #1e8449;
+}
+
+#reportTable th:hover { background: #2ecc71; }
+#reportTable th.sort-asc:after { content: " \25B2"; font-size: 10px; }
+#reportTable th.sort-desc:after { content: " \25BC"; font-size: 10px; }
+#reportTable td { padding: 8px 12px; border: 1px solid #ddd; }
+#reportTable tr:nth-child(even) { background: #f8faf8; }
+#reportTable tr:nth-child(odd) { background: #ffffff; }
+#reportTable tr:hover { background: #e8f0e8; }
+
+.status-completed { color: #27ae60; font-weight: bold; }
+.status-notrelevant { color: #7f8c8d; font-weight: bold; }
+.status-failed { color: #c0392b; font-weight: bold; }
+.status-pending { color: #e67e22; font-weight: bold; }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; }
+.pagination button { background: #27ae60; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+.pagination button:disabled { background: #ccc; cursor: default; }
+.pagination span { color: #666; }
+
+.no-data-msg { text-align: center; padding: 40px 20px; color: #999; font-size: 15px; font-style: italic; }
+
+/* Multi-select status filter */
+.multi-select {
+    position: relative;
+    display: inline-block;
+    min-width: 140px;
+}
+
+.multi-select-display {
+    padding: 5px 10px;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.multi-select-display .ms-arrow { float: right; margin-left: 8px; font-size: 10px; }
+
+.multi-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    z-index: 100;
+    padding: 2px 0;
+    width: auto;
+}
+
+.multi-select-options label {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1;
+    margin: 0;
+}
+
+.multi-select-options label:hover { background: #f0f0f0; }
+.multi-select-options label input { margin: 0 4px 0 0; padding: 0; vertical-align: middle; width: 13px; height: 13px; }
+
+/* Pagination with page size */
+.page-size-control { font-size: 12px; color: #666; margin-right: 12px; }
+.page-size-control select { padding: 3px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px; }
+
+/* Export/Print toolbar */
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.toolbar button {
+    padding: 6px 14px;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.toolbar button:hover { background: #f0f0f0; }
+.toolbar button.btn-export { border-color: #27ae60; color: #27ae60; }
+.toolbar button.btn-export:hover { background: rgba(39, 174, 96, 0.08); }
+.toolbar button.btn-print { border-color: #2980b9; color: #2980b9; }
+.toolbar button.btn-print:hover { background: rgba(41, 128, 185, 0.08); }
+
+/* Date range bar */
+.date-range-bar {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+}
+
+.date-range-bar label {
+    font-weight: bold;
+    color: #2980b9;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.date-range-bar select {
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.date-range-bar button {
+    background: #2980b9;
+    color: white;
+    border: none;
+    padding: 7px 18px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.date-range-bar button:hover { background: #3498db; }
+.date-range-bar button:disabled { background: #bdc3c7; cursor: default; }
+
+.data-status {
+    margin-left: auto;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Loading toast */
+.loading-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 2px solid #27ae60;
+    border-radius: 8px;
+    padding: 14px 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #333;
+    min-width: 320px;
+    max-width: 500px;
+}
+
+.loading-toast .toast-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid #e0e0e0;
+    border-top: 3px solid #27ae60;
+    border-radius: 50%;
+    animation: toastspin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes toastspin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-toast .toast-text {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.loading-toast .toast-text strong {
+    color: #27ae60;
+    display: block;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+/* Settings button & dropdown */
+.settings-btn {
+    background: none;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    position: relative;
+}
+
+.settings-btn:hover { background: #f0f0f0; border-color: #999; }
+
+.settings-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 200;
+    min-width: 220px;
+    padding: 6px 0;
+}
+
+.settings-dropdown-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 14px 4px 14px;
+}
+
+.settings-dropdown label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #333;
+    user-select: none;
+}
+
+.settings-dropdown label:hover { background: #f5f5f5; }
+
+.settings-dropdown label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.settings-dropdown .settings-desc {
+    font-size: 11px;
+    color: #888;
+    padding: 0 14px 8px 36px;
+    line-height: 1.4;
+}
+
+/* Debug panel */
+.debug-panel {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    font-family: monospace;
+    overflow: hidden;
+}
+
+.debug-panel-header {
+    background: #2d2d2d;
+    padding: 8px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    color: #9cdcfe;
+    font-size: 12px;
+}
+
+.debug-panel-header:hover { background: #3a3a3a; }
+
+.debug-panel-body {
+    padding: 10px 14px;
+    max-height: 260px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.debug-panel-body .debug-entry { margin-bottom: 4px; }
+.debug-panel-body .debug-label { color: #9cdcfe; }
+.debug-panel-body .debug-value { color: #ce9178; }
+.debug-panel-body .debug-ok { color: #6a9955; }
+.debug-panel-body .debug-err { color: #f48771; }
+.debug-panel-body .debug-warn { color: #dcdcaa; }
+.debug-panel-body .debug-sep { border-top: 1px solid #3a3a3a; margin: 6px 0; }
+
+@media print {
+    body { background: white; margin: 10px; font-size: 10px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    .selector-bar, .table-controls, .pagination, .toolbar, .no-data-msg, .multi-select-options, .loading-toast, .date-range-bar, .debug-panel, .filter-hint { display: none !important; }
+    .summary-card, .chart-box { box-shadow: none; border: 1px solid #ddd; }
+    .table-section { box-shadow: none; border: 1px solid #ddd; page-break-before: always; }
+    .summary-cards { gap: 8px; }
+    .summary-card { padding: 8px; }
+    .summary-card .card-value { font-size: 22px; }
+    #reportTable { font-size: 10px; }
+    #reportTable th { padding: 6px 8px; }
+    #reportTable td { padding: 5px 8px; }
+    h1 { font-size: 18px; margin-bottom: 2px; }
+    .subtitle { font-size: 11px; margin-bottom: 10px; }
+    .chart-box h3, .table-section h3 { font-size: 12px; }
+    #reportTableBody tr { display: table-row !important; }
+    .print-timestamp { display: block !important; text-align: right; font-size: 9px; color: #999; margin-bottom: 5px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading toast -->
+<div class="loading-toast" id="loadingToast" style="display:none;">
+    <div class="toast-spinner"></div>
+    <div class="toast-text">
+        <strong id="toastTitle">Loading...</strong>
+        <span id="toastDetail"></span>
+    </div>
+</div>
+
+<h1>Multi-Action-Group Deployment Status</h1>
+<div class="subtitle" id="reportSubtitle">Select a Multi-Action Group to generate the deployment status report</div>
+
+<div class="date-range-bar">
+    <label>Date Range:</label>
+    <select id="dateRangeSelect">
+        <option value="30" selected>Last 30 days</option>
+        <option value="60">31-60 days</option>
+        <option value="90">61-90 days</option>
+        <option value="180">91-180 days</option>
+        <option value="365">181-365 days</option>
+        <option value="730">366-730 days</option>
+        <option value="3650">&#9888; All Older</option>
+    </select>
+    <button id="reloadBtn">Reload Data</button>
+    <span class="data-status" id="dataStatusText"></span>
+    <div style="position:relative; margin-left:auto;">
+        <button class="settings-btn" id="settingsBtn" title="Report Settings">
+            &#9881; Settings
+        </button>
+        <div class="settings-dropdown" id="settingsDropdown" style="display:none;">
+            <div class="settings-dropdown-title">Report Settings</div>
+            <label>
+                <input type="checkbox" id="debugToggleChk">
+                Enable Diagnostics Panel
+            </label>
+            <div class="settings-desc">Shows raw queries, response lengths, and error details. Useful for troubleshooting — hide for normal use.</div>
+        </div>
+    </div>
+</div>
+
+<div id="olderWarning" style="display:none; background:#fff8e1; border:1px solid #f9a825; border-radius:6px; padding:10px 16px; margin-bottom:12px; font-size:13px; color:#7a5800; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <strong>&#9888; Performance Warning:</strong> The "All Older" range queries up to 10 years of history. In large environments this is likely to time out. The current action list will remain available if it does.
+</div>
+
+<div class="selector-bar">
+    <label>Action Group:</label>
+    <div style="flex:1; min-width:250px;">
+        <input type="text" id="actionSearch" placeholder="Type to search by name or ID..." oninput="filterDropdown()" style="width:100%; padding:6px 10px; font-size:13px; border:1px solid #ccc; border-radius:4px; margin-bottom:4px;">
+        <select id="actionSelect" style="width:100%; padding:6px 10px; font-size:13px; border:1px solid #ccc; border-radius:4px;"><option value="">-- Loading... --</option></select>
+    </div>
+    <button id="generateBtn" onclick="generateReport()">Generate Report</button>
+</div>
+
+<!-- DEBUG PANEL — collapse/expand to view diagnostics -->
+<div class="debug-panel" id="debugPanel">
+    <div class="debug-panel-header" onclick="toggleDebugPanel()">
+        <span>&#128269; Diagnostics &amp; Debug Log</span>
+        <span id="debugToggleIcon">&#9660;</span>
+    </div>
+    <div class="debug-panel-body" id="debugLog" style="display:none;">
+        <div class="debug-entry debug-warn">Waiting for data...</div>
+    </div>
+</div>
+
+<div id="reportContent" style="display:none;">
+    <div class="summary-cards">
+        <div class="summary-card completed clickable" onclick="applyQuickFilter('Completed', null)" title="Click to filter table to Completed only">
+            <div class="card-value" id="cardCompleted">0</div><div class="card-label">Completed</div>
+        </div>
+        <div class="summary-card notrelevant clickable" onclick="applyQuickFilter('Not Relevant', null)" title="Click to filter table to Not Relevant only">
+            <div class="card-value" id="cardNotRelevant">0</div><div class="card-label">Not Relevant</div>
+        </div>
+        <div class="summary-card failed clickable" onclick="applyQuickFilter('Failed', null)" title="Click to filter table to Failed only">
+            <div class="card-value" id="cardFailed">0</div><div class="card-label">Failed</div>
+        </div>
+        <div class="summary-card pending clickable" onclick="applyQuickFilter('Pending', null)" title="Click to filter table to Pending / Other only">
+            <div class="card-value" id="cardPending">0</div><div class="card-label">Pending / Other</div>
+        </div>
+        <div class="summary-card total clickable" onclick="clearAllFilters()" title="Click to clear all filters and show all results">
+            <div class="card-value" id="cardTotal">0</div><div class="card-label">Total Results</div>
+        </div>
+    </div>
+
+    <div class="filter-hint" id="filterHint">Click a card or chart segment to filter the table below</div>
+
+    <div class="charts-container">
+        <div class="chart-box">
+            <h3>Deployment Status - Overall Distribution</h3>
+            <div class="pie-container">
+                <svg class="pie-svg" id="pieChart" viewBox="0 0 220 200"></svg>
+                <div class="pie-legend" id="pieLegend"></div>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h3>Status by Component</h3>
+            <div class="bar-chart-area"><svg class="bar-chart-svg" id="barChart"></svg></div>
+            <div class="bar-legend">
+                <div class="bar-legend-item"><div class="bar-legend-color" style="background:#27ae60;"></div>Completed</div>
+                <div class="bar-legend-item"><div class="bar-legend-color" style="background:#7f8c8d;"></div>Not Relevant</div>
+                <div class="bar-legend-item"><div class="bar-legend-color" style="background:#c0392b;"></div>Failed</div>
+                <div class="bar-legend-item"><div class="bar-legend-color" style="background:#e67e22;"></div>Pending</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="print-timestamp" id="printTimestamp" style="display:none;"></div>
+
+    <div class="toolbar">
+        <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+        <button class="btn-print" onclick="printReport()">Print Report</button>
+    </div>
+
+    <div class="table-section" id="tableSection">
+        <h3>Component Results</h3>
+        <div class="table-controls">
+            <input type="text" id="searchBox" placeholder="Search..." oninput="filterAndRender()">
+            <div class="multi-select" id="statusMultiSelect">
+                <div class="multi-select-display" onclick="toggleMultiSelect()">All Statuses <span class="ms-arrow">&#9662;</span></div>
+                <div class="multi-select-options" id="statusOptions" style="display:none;">
+                    <label><input type="checkbox" value="Completed" onchange="filterAndRender()"> Completed</label>
+                    <label><input type="checkbox" value="Not Relevant" onchange="filterAndRender()"> Not Relevant</label>
+                    <label><input type="checkbox" value="Failed" onchange="filterAndRender()"> Failed</label>
+                    <label><input type="checkbox" value="Pending" onchange="filterAndRender()"> Pending</label>
+                </div>
+            </div>
+            <select id="computerFilter" onchange="filterAndRender()"><option value="">All Computers</option></select>
+            <select id="componentFilter" onchange="filterAndRender()"><option value="">All Components</option></select>
+            <span class="record-count" id="recordCount"></span>
+        </div>
+        <table id="reportTable">
+            <thead><tr>
+                <th onclick="sortByColumn(0)">Computer</th>
+                <th onclick="sortByColumn(1)">Component</th>
+                <th onclick="sortByColumn(2)">Status</th>
+                <th onclick="sortByColumn(3)">Date Completed</th>
+            </tr></thead>
+            <tbody id="reportTableBody"></tbody>
+        </table>
+        <div class="pagination">
+            <span class="page-size-control">
+                Show: <select id="pageSizeSelect" onchange="changePageSize()">
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="250">250</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                    <option value="0">All Results</option>
+                </select> per page
+            </span>
+            <button id="btnFirst" onclick="goToPage(0)">First</button>
+            <button id="btnPrev" onclick="changePage(-1)">Prev</button>
+            <span id="pageInfo"></span>
+            <button id="btnNext" onclick="changePage(1)">Next</button>
+            <button id="btnLast" onclick="goToPage(-1)">Last</button>
+        </div>
+    </div>
+</div>
+
+<div id="noDataMsg" class="no-data-msg" style="display:none;">
+    No results found for this action group. It may not have been deployed to any computers yet.
+</div>
+
+<!-- ================================================================ -->
+<!-- DROPDOWN DATA ONLY: action list for initial page load            -->
+<!-- Results are fetched on-demand when Generate Report is clicked.   -->
+<!-- ================================================================ -->
+<script type="text/plain" id="rawActionList"><?relevance concatenation "{{ACT}}" of (id of it as string & "||" & name of it) of bes actions whose (exists member actions of it AND time issued of it > (now - 30*day)) ?></script>
+
+<script>
+(function() {
+    var actionGroups = {};
+    var allData = [];
+    var filteredData = [];
+    var currentPage = 0;
+    var pageSize = 50;
+    var sortCol = 0;
+    var sortDir = 1;
+    var colors = { completed: '#27ae60', notrelevant: '#7f8c8d', failed: '#c0392b', pending: '#e67e22' };
+    var debugLines = [];
+
+    // ============================================================
+    // DEBUG LOG
+    // ============================================================
+    function dbg(label, value, type) {
+        // type: 'ok', 'err', 'warn', '' (default)
+        var cls = type ? 'debug-' + type : '';
+        var entry = '<div class="debug-entry ' + cls + '">' +
+            '<span class="debug-label">' + escapeHtml(label) + ':</span> ' +
+            '<span class="debug-value">' + escapeHtml(String(value)) + '</span>' +
+            '</div>';
+        debugLines.push(entry);
+        var log = document.getElementById('debugLog');
+        if (log) log.innerHTML = debugLines.join('');
+        console.log('[MAG Debug] ' + label + ': ' + value);
+    }
+
+    function dbgSep() {
+        debugLines.push('<div class="debug-sep"></div>');
+        var log = document.getElementById('debugLog');
+        if (log) log.innerHTML = debugLines.join('');
+    }
+
+    window.toggleDebugPanel = function() {
+        var body = document.getElementById('debugLog');
+        var icon = document.getElementById('debugToggleIcon');
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            icon.innerHTML = '&#9650;';
+        } else {
+            body.style.display = 'none';
+            icon.innerHTML = '&#9660;';
+        }
+    };
+
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+    function trim(s) { return s ? s.replace(/^\s+|\s+$/g, '') : ''; }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(String(text)));
+        return div.innerHTML;
+    }
+
+    function mapStatus(rawStatus) {
+        var s = rawStatus.toLowerCase().replace(/^\s+|\s+$/g, '');
+        if (s === 'fixed' || s === 'completed') return 'Completed';
+        if (s === 'not relevant') return 'Not Relevant';
+        if (s === 'failed') return 'Failed';
+        return 'Pending';
+    }
+
+    function getStatusClass(s) {
+        if (s === 'Completed') return 'status-completed';
+        if (s === 'Not Relevant') return 'status-notrelevant';
+        if (s === 'Failed') return 'status-failed';
+        return 'status-pending';
+    }
+
+    function getUniqueValues(data, field) {
+        var seen = {}, arr = [];
+        for (var i = 0; i < data.length; i++) {
+            var v = data[i][field];
+            if (!seen[v]) { seen[v] = true; arr.push(v); }
+        }
+        arr.sort();
+        return arr;
+    }
+
+    // ------------------------------------------------------------
+    // 3D CHART HELPERS — color shading for side walls / top faces
+    // ------------------------------------------------------------
+    function darkenColor(hex, factor) {
+        var num = parseInt(hex.replace('#', ''), 16);
+        var r = Math.max(0, Math.round(((num >> 16) & 0xFF) * (1 - factor)));
+        var g = Math.max(0, Math.round(((num >> 8)  & 0xFF) * (1 - factor)));
+        var b = Math.max(0, Math.round(( num        & 0xFF) * (1 - factor)));
+        var hexStr = ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+        return '#' + hexStr;
+    }
+
+    function lightenColor(hex, factor) {
+        var num = parseInt(hex.replace('#', ''), 16);
+        var rC = (num >> 16) & 0xFF, gC = (num >> 8) & 0xFF, bC = num & 0xFF;
+        var r = Math.min(255, Math.round(rC + (255 - rC) * factor));
+        var g = Math.min(255, Math.round(gC + (255 - gC) * factor));
+        var b = Math.min(255, Math.round(bC + (255 - bC) * factor));
+        var hexStr = ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+        return '#' + hexStr;
+    }
+
+    // ============================================================
+    // DATE WINDOW MAPPING
+    // ============================================================
+    function getWindowForValue(val) {
+        var windows = {
+            '30':   { lower: 0,   upper: 30,   label: 'Last 30 days' },
+            '60':   { lower: 30,  upper: 60,   label: '31-60 days' },
+            '90':   { lower: 60,  upper: 90,   label: '61-90 days' },
+            '180':  { lower: 90,  upper: 180,  label: '91-180 days' },
+            '365':  { lower: 180, upper: 365,  label: '181-365 days' },
+            '730':  { lower: 365, upper: 730,  label: '366-730 days' },
+            '3650': { lower: 730, upper: 3650, label: 'Older (731-3650 days)' }
+        };
+        return windows[String(val)] || windows['30'];
+    }
+
+    function buildTimeFilter(win) {
+        if (win.lower === 0) {
+            return 'time issued of it > (now - ' + win.upper + '*day)';
+        } else {
+            return 'time issued of it > (now - ' + win.upper + '*day) AND time issued of it <= (now - ' + win.lower + '*day)';
+        }
+    }
+
+    // ============================================================
+    // RELEVANCE BUILDERS
+    // ============================================================
+    function buildActionListRelevance(win) {
+        var tf = buildTimeFilter(win);
+        return 'concatenation "{{ACT}}" of (id of it as string & "||" & name of it) of bes actions whose (exists member actions of it AND ' + tf + ')';
+    }
+
+    // ----------------------------------------------------------------
+    // Per-group results query: targets a SINGLE action group by ID.
+    //
+    // KEY FIXES vs the old bulk query:
+    //   1. Queries one action at a time — no massive concatenation
+    //   2. Guards "name of action of it" — member actions may reference
+    //      deleted fixlets; if the action was cleaned from the DB,
+    //      the unguarded expression throws "nonexistent object"
+    //   3. Guards "name of computer of it" — computers removed from BES
+    //      can leave orphaned result records with no valid computer ref
+    // ----------------------------------------------------------------
+    function buildSingleGroupResultRelevance(actionId) {
+        var id = parseInt(actionId, 10);
+        return 'concatenation "{{ROW}}" of (' +
+            '(if exists action of it then name of action of it else "Unknown Component") & "||" & ' +
+            '(if exists computer of it then name of computer of it else "Unknown Computer") & "||" & ' +
+            '(status of it as string) & "||" & ' +
+            '(if exists end time of it then end time of it as string else "--")' +
+            ') of results of member actions of (bes actions whose (id of it = ' + id + '))';
+    }
+
+    // ============================================================
+    // PARSE EMBEDDED ACTION LIST (page load only)
+    // ============================================================
+    function parseActionList(rawOverride) {
+        var rawText;
+        if (typeof rawOverride === 'string') {
+            rawText = rawOverride;
+        } else {
+            var el = document.getElementById('rawActionList');
+            if (!el) { dbg('rawActionList element', 'NOT FOUND', 'err'); return; }
+            rawText = el.textContent || el.innerText || el.innerHTML || '';
+        }
+
+        dbg('rawActionList length', rawText.length + ' chars');
+
+        var items = rawText.split('{{ACT}}');
+        var parsed = 0;
+        for (var i = 0; i < items.length; i++) {
+            var line = trim(items[i]);
+            if (!line) continue;
+            var parts = line.split('||');
+            if (parts.length >= 2) {
+                var aid = trim(parts[0]);
+                if (aid && !isNaN(aid)) {
+                    if (!actionGroups[aid]) actionGroups[aid] = { name: '', rows: [] };
+                    actionGroups[aid].name = trim(parts[1]);
+                    parsed++;
+                }
+            }
+        }
+        dbg('Action groups parsed from embedded list', parsed, parsed > 0 ? 'ok' : 'warn');
+        return parsed;
+    }
+
+    // ============================================================
+    // PARSE RESULTS (called after on-demand XHR fetch)
+    // Populates rows for a specific action group.
+    // ============================================================
+    function parseResultRows(rawText, actionId) {
+        dbg('Results raw response length for ' + actionId, rawText.length + ' chars');
+        dbg('Results response preview', rawText.substring(0, 200));
+
+        var rows = [];
+        if (!rawText || !trim(rawText)) {
+            dbg('Results parse', 'Empty response — no rows', 'warn');
+            return rows;
+        }
+
+        var parts = rawText.split('{{ROW}}');
+        dbg('{{ROW}} segments found', parts.length);
+
+        for (var r = 0; r < parts.length; r++) {
+            var row = trim(parts[r]);
+            if (!row) continue;
+            var cols = row.split('||');
+            if (cols.length >= 3) {
+                var rawStatus = trim(cols[2]);
+                rows.push({
+                    component:     trim(cols[0]),
+                    computer:      trim(cols[1]),
+                    rawStatus:     rawStatus,
+                    status:        mapStatus(rawStatus),
+                    dateCompleted: cols.length >= 4 ? trim(cols[3]) : '--'
+                });
+            }
+        }
+        dbg('Rows successfully parsed', rows.length, rows.length > 0 ? 'ok' : 'warn');
+        return rows;
+    }
+
+    // ============================================================
+    // DROPDOWN
+    // ============================================================
+    var allDropdownItems = [];
+
+    function populateDropdown(filterText) {
+        var sel = document.getElementById('actionSelect');
+        var currentVal = sel.value;
+        sel.innerHTML = '';
+
+        if (allDropdownItems.length === 0) {
+            for (var aid in actionGroups) {
+                if (actionGroups.hasOwnProperty(aid)) {
+                    allDropdownItems.push({ id: aid, name: actionGroups[aid].name });
+                }
+            }
+            allDropdownItems.sort(function(a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+        }
+
+        var filter = (filterText || '').toLowerCase();
+        var filtered = [];
+        for (var i = 0; i < allDropdownItems.length; i++) {
+            var item = allDropdownItems[i];
+            if (filter && item.name.toLowerCase().indexOf(filter) === -1 && item.id.indexOf(filter) === -1) continue;
+            filtered.push(item);
+        }
+
+        if (filtered.length === 0) {
+            var opt = document.createElement('option');
+            opt.value = '';
+            opt.text = filter ? '-- No matches for "' + filterText + '" --' : '-- No Action Groups found --';
+            sel.appendChild(opt);
+            return;
+        }
+
+        var def = document.createElement('option');
+        def.value = '';
+        def.text = '-- Select (' + filtered.length + ' of ' + allDropdownItems.length + ') --';
+        sel.appendChild(def);
+
+        for (var j = 0; j < filtered.length; j++) {
+            var o = document.createElement('option');
+            o.value = filtered[j].id;
+            o.text = filtered[j].name + ' (ID: ' + filtered[j].id + ')';
+            sel.appendChild(o);
+        }
+
+        if (currentVal) {
+            for (var k = 0; k < sel.options.length; k++) {
+                if (sel.options[k].value === currentVal) { sel.value = currentVal; break; }
+            }
+        }
+    }
+
+    window.filterDropdown = function() {
+        populateDropdown(document.getElementById('actionSearch').value || '');
+    };
+
+    // ============================================================
+    // GENERATE REPORT — fetches results on-demand for selected group
+    // ============================================================
+    window.generateReport = function() {
+        var sel = document.getElementById('actionSelect');
+        var actionId = sel.value;
+        if (!actionId) { alert('Please select an Action Group.'); return; }
+
+        var group = actionGroups[actionId];
+        if (!group) {
+            dbg('generateReport', 'Action ID ' + actionId + ' not found in actionGroups', 'err');
+            document.getElementById('reportContent').style.display = 'none';
+            document.getElementById('noDataMsg').style.display = 'block';
+            return;
+        }
+
+        var groupName = group.name || ('Action Group ' + actionId);
+        document.getElementById('reportContent').style.display = 'none';
+        document.getElementById('noDataMsg').style.display = 'none';
+        document.getElementById('reportSubtitle').innerHTML = '<strong>' + escapeHtml(groupName) + '</strong>';
+
+        var genBtn = document.getElementById('generateBtn');
+        genBtn.disabled = true;
+
+        dbgSep();
+        dbg('Generate Report requested', groupName + ' (ID: ' + actionId + ')');
+
+        var rel = buildSingleGroupResultRelevance(actionId);
+        dbg('Relevance query', rel);
+
+        showToast('Fetching Results...', 'Loading deployment data for ' + groupName + '...');
+
+        tryFetchRelevance(rel, function(rawResult) {
+            hideToast();
+            genBtn.disabled = false;
+
+            var rows = parseResultRows(rawResult, actionId);
+            actionGroups[actionId].rows = rows;
+
+            if (rows.length === 0) {
+                document.getElementById('reportContent').style.display = 'none';
+                document.getElementById('noDataMsg').style.display = 'block';
+                dbg('Result', 'No rows — showing no-data message', 'warn');
+                return;
+            }
+
+            renderReport(actionId, groupName);
+
+        }, function(errMsg) {
+            hideToast();
+            genBtn.disabled = false;
+            dbg('XHR ERROR for results', errMsg, 'err');
+            alert('Error fetching results for this action group:\n\n' + errMsg);
+        });
+    };
+
+    // ============================================================
+    // RENDER REPORT — called after results are in actionGroups[id]
+    // ============================================================
+    function renderReport(actionId, groupName) {
+        var rows = actionGroups[actionId].rows;
+        allData = rows.slice();
+
+        document.getElementById('noDataMsg').style.display = 'none';
+        document.getElementById('reportContent').style.display = 'block';
+
+        var computers = getUniqueValues(allData, 'computer');
+        var components = getUniqueValues(allData, 'component');
+        document.getElementById('reportSubtitle').innerHTML =
+            '<strong>' + escapeHtml(groupName) + '</strong> &mdash; ' +
+            allData.length + ' results across ' + computers.length + ' computers and ' + components.length + ' components';
+
+        var completed = 0, notrelevant = 0, failed = 0, pending = 0;
+        for (var i = 0; i < allData.length; i++) {
+            if (allData[i].status === 'Completed') completed++;
+            else if (allData[i].status === 'Not Relevant') notrelevant++;
+            else if (allData[i].status === 'Failed') failed++;
+            else pending++;
+        }
+
+        document.getElementById('cardCompleted').innerText = completed;
+        document.getElementById('cardNotRelevant').innerText = notrelevant;
+        document.getElementById('cardFailed').innerText = failed;
+        document.getElementById('cardPending').innerText = pending;
+        document.getElementById('cardTotal').innerText = allData.length;
+
+        dbg('Report rendered', allData.length + ' rows | C:' + completed + ' NR:' + notrelevant + ' F:' + failed + ' P:' + pending, 'ok');
+
+        // Update the dropdown item for this group to show the fetched result count.
+        // Counts accumulate as you browse groups — no pre-load needed.
+        for (var di = 0; di < allDropdownItems.length; di++) {
+            if (allDropdownItems[di].id === actionId) {
+                allDropdownItems[di].count = rows.length;
+                break;
+            }
+        }
+        // Rebuild dropdown labels with updated count (preserving current selection)
+        (function refreshDropdownLabels() {
+            var sel = document.getElementById('actionSelect');
+            for (var oi = 0; oi < sel.options.length; oi++) {
+                if (sel.options[oi].value === actionId) {
+                    sel.options[oi].text = groupName + ' (ID: ' + actionId + ') [' + rows.length + ' results]';
+                    break;
+                }
+            }
+        })();
+
+        populateFilters(computers, components);
+        drawPieChart(completed, notrelevant, failed, pending);
+        drawBarChart();
+
+        sortCol = 0; sortDir = 1;
+        document.getElementById('searchBox').value = '';
+        var statusCbs = document.getElementById('statusOptions').getElementsByTagName('input');
+        for (var sc = 0; sc < statusCbs.length; sc++) statusCbs[sc].checked = false;
+        updateStatusDisplay();
+        document.getElementById('computerFilter').value = '';
+        document.getElementById('componentFilter').value = '';
+        document.getElementById('pageSizeSelect').value = '50';
+        pageSize = 50;
+        var headers = document.querySelectorAll('#reportTable th');
+        for (var h = 0; h < headers.length; h++) headers[h].className = '';
+        filterAndRender();
+    }
+
+    // ============================================================
+    // FILTERS / SORT / PAGINATION
+    // ============================================================
+    function populateFilters(computers, components) {
+        var cs = document.getElementById('computerFilter');
+        cs.innerHTML = '<option value="">All Computers</option>';
+        for (var j = 0; j < computers.length; j++) {
+            var o = document.createElement('option'); o.value = computers[j]; o.text = computers[j]; cs.appendChild(o);
+        }
+        var cn = document.getElementById('componentFilter');
+        cn.innerHTML = '<option value="">All Components</option>';
+        for (var k = 0; k < components.length; k++) {
+            var o2 = document.createElement('option'); o2.value = components[k];
+            o2.text = components[k].length > 55 ? components[k].substring(0, 52) + '...' : components[k];
+            o2.title = components[k]; cn.appendChild(o2);
+        }
+    }
+
+    window.filterAndRender = function() {
+        var search = (document.getElementById('searchBox').value || '').toLowerCase();
+        var selectedStatuses = getSelectedStatuses();
+        var cv = document.getElementById('computerFilter').value;
+        var cnv = document.getElementById('componentFilter').value;
+        filteredData = [];
+        for (var i = 0; i < allData.length; i++) {
+            var d = allData[i];
+            if (selectedStatuses.length > 0 && selectedStatuses.indexOf(d.status) === -1) continue;
+            if (cv && d.computer !== cv) continue;
+            if (cnv && d.component !== cnv) continue;
+            if (search && (d.computer + ' ' + d.component + ' ' + d.status + ' ' + d.dateCompleted).toLowerCase().indexOf(search) === -1) continue;
+            filteredData.push(d);
+        }
+        filteredData.sort(function(a, b) {
+            var va, vb;
+            if (sortCol === 0)      { va = a.computer; vb = b.computer; }
+            else if (sortCol === 1) { va = a.component; vb = b.component; }
+            else if (sortCol === 2) { va = a.status; vb = b.status; }
+            else                    { va = a.dateCompleted; vb = b.dateCompleted; }
+            return va < vb ? -1 * sortDir : va > vb ? 1 * sortDir : 0;
+        });
+        currentPage = 0;
+        renderPage();
+        updateStatusDisplay();
+        updateActiveCardState();
+    };
+
+    window.sortByColumn = function(col) {
+        if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+        var headers = document.querySelectorAll('#reportTable th');
+        for (var i = 0; i < headers.length; i++) {
+            headers[i].className = (i === sortCol) ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : '';
+        }
+        window.filterAndRender();
+    };
+
+    function renderPage() {
+        var ps = getEffectivePageSize();
+        var start = currentPage * ps;
+        var end = Math.min(start + ps, filteredData.length);
+        var tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = '';
+        for (var i = start; i < end; i++) {
+            var d = filteredData[i];
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td'); td1.innerText = d.computer; tr.appendChild(td1);
+            var td2 = document.createElement('td'); td2.innerText = d.component; tr.appendChild(td2);
+            var td3 = document.createElement('td'); td3.innerHTML = '<span class="' + getStatusClass(d.status) + '">' + escapeHtml(d.status) + '</span>'; tr.appendChild(td3);
+            var td4 = document.createElement('td'); td4.innerText = d.dateCompleted; tr.appendChild(td4);
+            tbody.appendChild(tr);
+        }
+        var tp = Math.max(1, Math.ceil(filteredData.length / ps));
+        document.getElementById('pageInfo').innerText = 'Page ' + (currentPage + 1) + ' of ' + tp;
+        document.getElementById('btnFirst').disabled = (currentPage === 0);
+        document.getElementById('btnPrev').disabled = (currentPage === 0);
+        document.getElementById('btnNext').disabled = (currentPage >= tp - 1);
+        document.getElementById('btnLast').disabled = (currentPage >= tp - 1);
+        document.getElementById('recordCount').innerText = filteredData.length + ' of ' + allData.length + ' records';
+    }
+
+    window.changePage = function(delta) {
+        var ps = getEffectivePageSize();
+        var tp = Math.ceil(filteredData.length / ps);
+        currentPage = Math.max(0, Math.min(currentPage + delta, tp - 1));
+        renderPage();
+    };
+
+    window.goToPage = function(page) {
+        var ps = getEffectivePageSize();
+        var tp = Math.max(1, Math.ceil(filteredData.length / ps));
+        if (page === -1) page = tp - 1;
+        currentPage = Math.max(0, Math.min(page, tp - 1));
+        renderPage();
+    };
+
+    window.changePageSize = function() {
+        pageSize = getEffectivePageSize();
+        currentPage = 0;
+        renderPage();
+    };
+
+    function getEffectivePageSize() {
+        var val = parseInt(document.getElementById('pageSizeSelect').value, 10);
+        return (val === 0) ? (filteredData.length || 1) : val;
+    }
+
+    window.toggleMultiSelect = function() {
+        var opts = document.getElementById('statusOptions');
+        opts.style.display = (opts.style.display === 'none') ? 'block' : 'none';
+    };
+
+    function getSelectedStatuses() {
+        var checkboxes = document.getElementById('statusOptions').getElementsByTagName('input');
+        var selected = [];
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) selected.push(checkboxes[i].value);
+        }
+        return selected;
+    }
+
+    function updateStatusDisplay() {
+        var selected = getSelectedStatuses();
+        var display = document.getElementById('statusMultiSelect').getElementsByClassName('multi-select-display')[0];
+        if (selected.length === 0) {
+            display.innerHTML = 'All Statuses <span class="ms-arrow">&#9662;</span>';
+        } else if (selected.length === 1) {
+            display.innerHTML = escapeHtml(selected[0]) + ' <span class="ms-arrow">&#9662;</span>';
+        } else {
+            display.innerHTML = selected.length + ' statuses selected <span class="ms-arrow">&#9662;</span>';
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        var ms = document.getElementById('statusMultiSelect');
+        if (ms && !ms.contains(e.target)) {
+            document.getElementById('statusOptions').style.display = 'none';
+        }
+    });
+
+    // ============================================================
+    // QUICK FILTER — fired by clicking a card, pie slice, or bar segment
+    //
+    //   status    : 'Completed' | 'Not Relevant' | 'Failed' | 'Pending' | null
+    //   component : component name (for bar chart clicks) | null
+    //
+    // Clears existing filters, applies the requested ones, rerenders,
+    // and scrolls the table into view so the user sees the result.
+    // ============================================================
+    window.applyQuickFilter = function(status, component) {
+        // Clear text search and computer filter — quick filters operate
+        // on status/component only, so we don't want stale search terms
+        // shadowing the result.
+        document.getElementById('searchBox').value = '';
+        document.getElementById('computerFilter').value = '';
+
+        // Check exactly the requested status (all others off)
+        var statusCbs = document.getElementById('statusOptions').getElementsByTagName('input');
+        for (var i = 0; i < statusCbs.length; i++) {
+            statusCbs[i].checked = (!!status && statusCbs[i].value === status);
+        }
+
+        // Apply component filter if provided; otherwise clear it
+        var compSel = document.getElementById('componentFilter');
+        if (component) {
+            // Verify the component exists as an option (safety check)
+            var found = false;
+            for (var c = 0; c < compSel.options.length; c++) {
+                if (compSel.options[c].value === component) { found = true; break; }
+            }
+            compSel.value = found ? component : '';
+        } else {
+            compSel.value = '';
+        }
+
+        filterAndRender();
+
+        // Scroll the table into view so the filtered rows are visible
+        var tableSection = document.getElementById('tableSection');
+        if (tableSection && tableSection.scrollIntoView) {
+            try {
+                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch(e) {
+                tableSection.scrollIntoView(); // fallback for older browsers
+            }
+        }
+    };
+
+    // Clear all filters — fired by clicking the Total Results card
+    window.clearAllFilters = function() {
+        document.getElementById('searchBox').value = '';
+        document.getElementById('computerFilter').value = '';
+        document.getElementById('componentFilter').value = '';
+        var statusCbs = document.getElementById('statusOptions').getElementsByTagName('input');
+        for (var i = 0; i < statusCbs.length; i++) statusCbs[i].checked = false;
+        filterAndRender();
+
+        var tableSection = document.getElementById('tableSection');
+        if (tableSection && tableSection.scrollIntoView) {
+            try {
+                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch(e) {
+                tableSection.scrollIntoView();
+            }
+        }
+    };
+
+    // Keep the active-card outline in sync with the current filter set.
+    // Called at the end of filterAndRender so it responds to any filter
+    // change — card clicks, chart clicks, or manual control changes.
+    function updateActiveCardState() {
+        var selected = getSelectedStatuses();
+        var cv = document.getElementById('computerFilter').value;
+        var cnv = document.getElementById('componentFilter').value;
+        var search = document.getElementById('searchBox').value;
+
+        // Clear any existing active markers
+        var cards = document.querySelectorAll('.summary-card');
+        for (var i = 0; i < cards.length; i++) cards[i].classList.remove('active');
+
+        var hint = document.getElementById('filterHint');
+
+        // No filters at all → highlight Total Results
+        if (selected.length === 0 && !cv && !cnv && !search) {
+            var totalCard = document.querySelector('.summary-card.total');
+            if (totalCard) totalCard.classList.add('active');
+            if (hint) hint.innerHTML = 'Click a card or chart segment to filter the table below';
+            return;
+        }
+
+        // Exactly one status + no other filters → highlight the matching card
+        if (selected.length === 1 && !cv && !cnv && !search) {
+            var statusToClass = {
+                'Completed':    'completed',
+                'Not Relevant': 'notrelevant',
+                'Failed':       'failed',
+                'Pending':      'pending'
+            };
+            var cls = statusToClass[selected[0]];
+            if (cls) {
+                var card = document.querySelector('.summary-card.' + cls);
+                if (card) card.classList.add('active');
+            }
+        }
+
+        // Build a descriptive hint of what's currently filtered
+        if (hint) {
+            var parts = [];
+            if (selected.length > 0) {
+                parts.push('Status: <span class="active-filter-desc">' + escapeHtml(selected.join(', ')) + '</span>');
+            }
+            if (cnv) {
+                var compDisplay = cnv.length > 60 ? cnv.substring(0, 57) + '...' : cnv;
+                parts.push('Component: <span class="active-filter-desc">' + escapeHtml(compDisplay) + '</span>');
+            }
+            if (cv) {
+                parts.push('Computer: <span class="active-filter-desc">' + escapeHtml(cv) + '</span>');
+            }
+            if (search) {
+                parts.push('Search: <span class="active-filter-desc">' + escapeHtml(search) + '</span>');
+            }
+            if (parts.length > 0) {
+                hint.innerHTML = 'Filtered &rarr; ' + parts.join(' &middot; ') +
+                    ' &nbsp; <a href="javascript:void(0)" onclick="clearAllFilters()" style="color:#2980b9; text-decoration:underline;">clear</a>';
+            }
+        }
+    }
+
+    // ============================================================
+    // EXPORT CSV
+    // ============================================================
+    window.exportCSV = function() {
+        if (filteredData.length === 0) { alert('No data to export.'); return; }
+        var csvRows = ['Computer,Component,Status,Date Completed'];
+        for (var i = 0; i < filteredData.length; i++) {
+            var d = filteredData[i];
+            csvRows.push('"' + d.computer.replace(/"/g, '""') + '",' +
+                         '"' + d.component.replace(/"/g, '""') + '",' +
+                         '"' + d.status.replace(/"/g, '""') + '",' +
+                         '"' + d.dateCompleted.replace(/"/g, '""') + '"');
+        }
+        var csvContent = csvRows.join('\r\n');
+        var blob;
+        try {
+            blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        } catch(e) {
+            var bb = new (window.BlobBuilder || window.MSBlobBuilder || window.MozBlobBuilder || window.WebKitBlobBuilder)();
+            bb.append(csvContent);
+            blob = bb.getBlob('text/csv;charset=utf-8;');
+        }
+        var filename = 'MAG_Deployment_Status_' + new Date().toISOString().substring(0, 10) + '.csv';
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            var link = document.createElement('a');
+            var url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+        }
+    };
+
+    // ============================================================
+    // PRINT REPORT
+    // ============================================================
+    window.printReport = function() {
+        if (allData.length === 0) { alert('No data to print. Generate a report first.'); return; }
+        var ts = document.getElementById('printTimestamp');
+        ts.innerText = 'Printed: ' + new Date().toLocaleString();
+        ts.style.display = 'block';
+        var tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = '';
+        for (var i = 0; i < filteredData.length; i++) {
+            var d = filteredData[i];
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td'); td1.innerText = d.computer; tr.appendChild(td1);
+            var td2 = document.createElement('td'); td2.innerText = d.component; tr.appendChild(td2);
+            var td3 = document.createElement('td'); td3.innerHTML = '<span class="' + getStatusClass(d.status) + '">' + escapeHtml(d.status) + '</span>'; tr.appendChild(td3);
+            var td4 = document.createElement('td'); td4.innerText = d.dateCompleted; tr.appendChild(td4);
+            tbody.appendChild(tr);
+        }
+        setTimeout(function() {
+            window.print();
+            setTimeout(function() { ts.style.display = 'none'; renderPage(); }, 500);
+        }, 300);
+    };
+
+    // ============================================================
+    // 3D PIE CHART — squashed ellipse with colored side walls
+    //
+    // Geometry:
+    //   - Top face is a squashed ellipse (rx > ry → looks like a pie
+    //     viewed from above at an angle)
+    //   - Each visible slice (where any portion crosses the bottom
+    //     half of the ellipse) gets a side wall in a darker shade
+    //   - Walls are drawn first (Pass 1), then top faces (Pass 2)
+    //     so the top covers any seam artifacts
+    //
+    // UX is unchanged: only the top faces carry click handlers, so
+    // click areas match the original 2D pie. Walls are decorative.
+    // ============================================================
+    function drawPieChart(completed, notrelevant, failed, pending) {
+        var svg = document.getElementById('pieChart');
+        svg.innerHTML = '';
+        var total = completed + notrelevant + failed + pending;
+        if (total === 0) {
+            svg.innerHTML = '<text x="110" y="100" text-anchor="middle" fill="#999" font-size="14">No Data</text>';
+            document.getElementById('pieLegend').innerHTML = '';
+            return;
+        }
+        var data = [
+            { label: 'Completed',    value: completed,   color: colors.completed },
+            { label: 'Not Relevant', value: notrelevant, color: colors.notrelevant },
+            { label: 'Failed',       value: failed,      color: colors.failed },
+            { label: 'Pending',      value: pending,     color: colors.pending }
+        ];
+
+        // 3D parameters — viewBox is 0 0 220 200
+        var cx = 110, cy = 82, rx = 92, ry = 46, depth = 22;
+        var ns = 'http://www.w3.org/2000/svg';
+
+        // Build slice angle list (start at top, going clockwise)
+        var startAngle = -Math.PI / 2;
+        var slices = [];
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].value === 0) continue;
+            var sliceAngle = (data[i].value / total) * 2 * Math.PI;
+            var endAngle = startAngle + sliceAngle;
+            slices.push({
+                start:  startAngle,
+                end:    endAngle,
+                angle:  sliceAngle,
+                data:   data[i],
+                isFull: data[i].value === total
+            });
+            startAngle = endAngle;
+        }
+
+        // ----- PASS 1: side walls (visible front of pie) -----
+        // The visible front spans angles [0, π] in screen coords
+        // (where 0 = right, π/2 = bottom, π = left). For each slice,
+        // intersect [s.start, s.end] with [0, π] to find the wall arc.
+        for (var i = 0; i < slices.length; i++) {
+            var s = slices[i];
+            var visStart, visEnd;
+            if (s.isFull) {
+                visStart = 0;
+                visEnd   = Math.PI;
+            } else {
+                if (s.start >= Math.PI || s.end <= 0) continue;
+                visStart = Math.max(s.start, 0);
+                visEnd   = Math.min(s.end,   Math.PI);
+                if (visEnd <= visStart) continue;
+            }
+
+            var wx1 = cx + rx * Math.cos(visStart);
+            var wy1 = cy + ry * Math.sin(visStart);
+            var wx2 = cx + rx * Math.cos(visEnd);
+            var wy2 = cy + ry * Math.sin(visEnd);
+
+            // Path traverses: top-right → bottom-right → bottom arc to
+            // bottom-left → top-left → top arc back to start.
+            var wallD =
+                'M ' + wx1 + ' ' + wy1 +
+                ' L ' + wx1 + ' ' + (wy1 + depth) +
+                ' A ' + rx + ' ' + ry + ' 0 0 1 ' + wx2 + ' ' + (wy2 + depth) +
+                ' L ' + wx2 + ' ' + wy2 +
+                ' A ' + rx + ' ' + ry + ' 0 0 0 ' + wx1 + ' ' + wy1 +
+                ' Z';
+
+            var wallEl = document.createElementNS(ns, 'path');
+            wallEl.setAttribute('d', wallD);
+            wallEl.setAttribute('fill', darkenColor(s.data.color, 0.28));
+            wallEl.setAttribute('stroke', 'none');
+            wallEl.setAttribute('pointer-events', 'none');
+            svg.appendChild(wallEl);
+        }
+
+        // ----- PASS 2: top faces (the actual pie slices) -----
+        for (var i = 0; i < slices.length; i++) {
+            var s = slices[i];
+            var la = s.angle > Math.PI ? 1 : 0;
+            var x1 = cx + rx * Math.cos(s.start), y1 = cy + ry * Math.sin(s.start);
+            var x2 = cx + rx * Math.cos(s.end),   y2 = cy + ry * Math.sin(s.end);
+            var pd;
+
+            if (s.isFull) {
+                pd = 'M ' + (cx - rx) + ' ' + cy +
+                     ' A ' + rx + ' ' + ry + ' 0 1 1 ' + (cx + rx) + ' ' + cy +
+                     ' A ' + rx + ' ' + ry + ' 0 1 1 ' + (cx - rx) + ' ' + cy;
+            } else {
+                pd = 'M ' + cx + ' ' + cy +
+                     ' L ' + x1 + ' ' + y1 +
+                     ' A ' + rx + ' ' + ry + ' 0 ' + la + ' 1 ' + x2 + ' ' + y2 +
+                     ' Z';
+            }
+
+            var path = document.createElementNS(ns, 'path');
+            path.setAttribute('d', pd);
+            path.setAttribute('fill', s.data.color);
+            path.setAttribute('stroke', 'white');
+            path.setAttribute('stroke-width', '1');
+            path.setAttribute('data-clickable', '1');
+
+            (function(sliceLabel, sliceValue) {
+                var titleEl = document.createElementNS(ns, 'title');
+                titleEl.textContent = sliceLabel + ': ' + sliceValue + '  —  click to filter table';
+                path.appendChild(titleEl);
+                path.addEventListener('click', function() {
+                    applyQuickFilter(sliceLabel, null);
+                });
+            })(s.data.label, s.data.value);
+
+            svg.appendChild(path);
+
+            // Percentage label, positioned on the squashed ellipse
+            var pct = Math.round((s.data.value / total) * 100);
+            if (pct >= 5) {
+                var ma = s.start + s.angle / 2;
+                var lx = cx + (rx * 0.6) * Math.cos(ma);
+                var ly = cy + (ry * 0.6) * Math.sin(ma);
+                var txt = document.createElementNS(ns, 'text');
+                txt.setAttribute('x', lx); txt.setAttribute('y', ly);
+                txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
+                txt.setAttribute('fill', 'white'); txt.setAttribute('font-size', '13'); txt.setAttribute('font-weight', 'bold');
+                txt.setAttribute('pointer-events', 'none');
+                txt.textContent = pct + '%';
+                svg.appendChild(txt);
+            }
+        }
+
+        // Legend (unchanged)
+        var lh = '';
+        for (var j = 0; j < data.length; j++) {
+            var pv = total > 0 ? Math.round((data[j].value / total) * 100) : 0;
+            lh += '<div class="pie-legend-item"><div class="pie-legend-color" style="background:' + data[j].color + ';"></div>' +
+                  '<span>' + data[j].label + ': ' + data[j].value + ' (' + pv + '%)</span></div>';
+        }
+        document.getElementById('pieLegend').innerHTML = lh;
+    }
+
+    // ============================================================
+    // 3D STACKED BAR CHART — isometric boxes
+    //
+    // For each bar (component):
+    //   Pass 1: Right side wall for each segment (darker shade)
+    //   Pass 2: Top face for the topmost non-empty segment (lighter shade)
+    //   Pass 3: Front face for each segment (original color, click target)
+    //
+    // Drawn in this order so front faces cover any seams cleanly.
+    // Click handlers stay on front faces only — same UX as 2D version.
+    // ============================================================
+    function drawBarChart() {
+        var svg = document.getElementById('barChart');
+        svg.innerHTML = '';
+        var compMap = {}, compOrder = [];
+        for (var i = 0; i < allData.length; i++) {
+            var comp = allData[i].component;
+            if (!compMap[comp]) { compMap[comp] = { completed: 0, notrelevant: 0, failed: 0, pending: 0 }; compOrder.push(comp); }
+            if (allData[i].status === 'Completed') compMap[comp].completed++;
+            else if (allData[i].status === 'Not Relevant') compMap[comp].notrelevant++;
+            else if (allData[i].status === 'Failed') compMap[comp].failed++;
+            else compMap[comp].pending++;
+        }
+        if (compOrder.length === 0) return;
+
+        var bw = Math.max(22, Math.min(50, 500 / compOrder.length));
+        var bg = Math.max(10, bw * 0.35);     // slightly more gap for 3D depth
+        var dx = 8, dy = 8;                    // 3D depth offsets (x right, y up)
+        var cl = 50, ct = 18, ch = 200, lh = 150;
+        var cw = compOrder.length * (bw + bg) + cl + 30 + dx;
+        var sh = ct + ch + lh + 10;
+        var ns = 'http://www.w3.org/2000/svg';
+
+        svg.setAttribute('width', Math.max(cw, 300));
+        svg.setAttribute('height', sh);
+        svg.setAttribute('viewBox', '0 0 ' + Math.max(cw, 300) + ' ' + sh);
+
+        var maxT = 0;
+        for (var c = 0; c < compOrder.length; c++) {
+            var cd = compMap[compOrder[c]];
+            var t = cd.completed + cd.notrelevant + cd.failed + cd.pending;
+            if (t > maxT) maxT = t;
+        }
+        if (maxT === 0) maxT = 1;
+
+        // Grid lines & Y-axis labels
+        var ys = 5;
+        for (var s = 0; s <= ys; s++) {
+            var yv = Math.round((maxT / ys) * s);
+            var yp = ct + ch - (ch * (yv / maxT));
+            var gl = document.createElementNS(ns, 'line');
+            gl.setAttribute('x1', cl - 5); gl.setAttribute('y1', yp);
+            gl.setAttribute('x2', cw - 20); gl.setAttribute('y2', yp);
+            gl.setAttribute('stroke', '#e0e0e0'); gl.setAttribute('stroke-width', '1');
+            gl.setAttribute('pointer-events', 'none');
+            svg.appendChild(gl);
+            var yl = document.createElementNS(ns, 'text');
+            yl.setAttribute('x', cl - 10); yl.setAttribute('y', yp + 4);
+            yl.setAttribute('text-anchor', 'end'); yl.setAttribute('fill', '#666'); yl.setAttribute('font-size', '11');
+            yl.setAttribute('pointer-events', 'none');
+            yl.textContent = yv;
+            svg.appendChild(yl);
+        }
+
+        var yax = document.createElementNS(ns, 'text');
+        yax.setAttribute('x', 12); yax.setAttribute('y', ct + ch / 2);
+        yax.setAttribute('text-anchor', 'middle'); yax.setAttribute('fill', '#666'); yax.setAttribute('font-size', '11');
+        yax.setAttribute('transform', 'rotate(-90, 12, ' + (ct + ch / 2) + ')');
+        yax.setAttribute('pointer-events', 'none');
+        yax.textContent = 'Endpoint Count';
+        svg.appendChild(yax);
+
+        // Per-bar 3D rendering
+        for (var b = 0; b < compOrder.length; b++) {
+            var cd2 = compMap[compOrder[b]];
+            var x = cl + b * (bw + bg);
+            var segs = [
+                { value: cd2.completed,   color: colors.completed,   label: 'Completed' },
+                { value: cd2.notrelevant, color: colors.notrelevant, label: 'Not Relevant' },
+                { value: cd2.failed,      color: colors.failed,      label: 'Failed' },
+                { value: cd2.pending,     color: colors.pending,     label: 'Pending' }
+            ];
+
+            // Compute top-of-bar position for the top face
+            var totalH = 0;
+            for (var sg = 0; sg < segs.length; sg++) {
+                totalH += (segs[sg].value / maxT) * ch;
+            }
+            var barTopY = ct + ch - totalH;
+
+            // ----- PASS 1: right side walls (per segment) -----
+            var yo = ct + ch;
+            for (var sg = 0; sg < segs.length; sg++) {
+                if (segs[sg].value === 0) continue;
+                var segH = (segs[sg].value / maxT) * ch;
+                yo -= segH;
+
+                var sidePath =
+                    'M ' + (x + bw) + ' ' + yo +
+                    ' L ' + (x + bw + dx) + ' ' + (yo - dy) +
+                    ' L ' + (x + bw + dx) + ' ' + (yo + segH - dy) +
+                    ' L ' + (x + bw) + ' ' + (yo + segH) +
+                    ' Z';
+
+                var sideEl = document.createElementNS(ns, 'path');
+                sideEl.setAttribute('d', sidePath);
+                sideEl.setAttribute('fill', darkenColor(segs[sg].color, 0.28));
+                sideEl.setAttribute('stroke', 'none');
+                sideEl.setAttribute('pointer-events', 'none');
+                svg.appendChild(sideEl);
+            }
+
+            // ----- PASS 2: top face (only for topmost non-empty segment) -----
+            if (totalH > 0) {
+                var topColor = null;
+                for (var ts = segs.length - 1; ts >= 0; ts--) {
+                    if (segs[ts].value > 0) { topColor = segs[ts].color; break; }
+                }
+                if (topColor !== null) {
+                    var topPath =
+                        'M ' + x + ' ' + barTopY +
+                        ' L ' + (x + dx) + ' ' + (barTopY - dy) +
+                        ' L ' + (x + bw + dx) + ' ' + (barTopY - dy) +
+                        ' L ' + (x + bw) + ' ' + barTopY +
+                        ' Z';
+
+                    var topEl = document.createElementNS(ns, 'path');
+                    topEl.setAttribute('d', topPath);
+                    topEl.setAttribute('fill', lightenColor(topColor, 0.22));
+                    topEl.setAttribute('stroke', 'none');
+                    topEl.setAttribute('pointer-events', 'none');
+                    svg.appendChild(topEl);
+                }
+            }
+
+            // ----- PASS 3: front faces (the click targets) -----
+            yo = ct + ch;
+            for (var sg = 0; sg < segs.length; sg++) {
+                if (segs[sg].value === 0) continue;
+                var segH = (segs[sg].value / maxT) * ch;
+                yo -= segH;
+                var rect = document.createElementNS(ns, 'rect');
+                rect.setAttribute('x', x); rect.setAttribute('y', yo);
+                rect.setAttribute('width', bw); rect.setAttribute('height', segH);
+                rect.setAttribute('fill', segs[sg].color);
+                rect.setAttribute('stroke', 'white'); rect.setAttribute('stroke-width', '0.5');
+                rect.setAttribute('data-clickable', '1');
+
+                (function(segLabel, segValue, compName) {
+                    var titleEl = document.createElementNS(ns, 'title');
+                    titleEl.textContent = segLabel + ': ' + segValue + '  —  ' + compName + '  —  click to filter';
+                    rect.appendChild(titleEl);
+                    rect.addEventListener('click', function() {
+                        applyQuickFilter(segLabel, compName);
+                    });
+                })(segs[sg].label, segs[sg].value, compOrder[b]);
+
+                svg.appendChild(rect);
+            }
+
+            // X-axis label (component name)
+            var label = compOrder[b];
+            if (label.length > 40) label = label.substring(0, 37) + '...';
+            var xl = document.createElementNS(ns, 'text');
+            var xlx = x + bw / 2, xly = ct + ch + 8;
+            xl.setAttribute('x', xlx); xl.setAttribute('y', xly);
+            xl.setAttribute('text-anchor', 'end'); xl.setAttribute('fill', '#333'); xl.setAttribute('font-size', '10');
+            xl.setAttribute('transform', 'rotate(-45, ' + xlx + ', ' + xly + ')');
+            xl.setAttribute('pointer-events', 'none');
+            xl.textContent = label;
+            svg.appendChild(xl);
+        }
+    }
+
+    // ============================================================
+    // XHR + RESPONSE PARSING
+    // ============================================================
+    function extractResultText(responseText) {
+        dbg('Raw XHR response length', responseText.length + ' chars');
+        dbg('Raw XHR preview (first 300)', responseText.substring(0, 300));
+
+        try {
+            var json = JSON.parse(responseText);
+
+            // Surface relevance errors clearly
+            if (json && json.error && json.error !== '') {
+                if (!json.result || (Array.isArray(json.result) && json.result.length === 0)) {
+                    dbg('JSON error field (no result)', json.error, 'err');
+                    return { error: json.error };
+                }
+                // Has both error and result — log the error but continue
+                dbg('JSON error field (has partial result)', json.error, 'warn');
+            }
+
+            if (json && typeof json.result === 'string') {
+                dbg('JSON result type', 'string, length=' + json.result.length, 'ok');
+                return json.result;
+            }
+            if (json && Array.isArray(json.result)) {
+                dbg('JSON result type', 'array[' + json.result.length + ']', 'ok');
+                return json.result.join('');
+            }
+            if (json && Array.isArray(json.results)) {
+                dbg('JSON results type', 'array[' + json.results.length + ']', 'ok');
+                var jp = [];
+                for (var k = 0; k < json.results.length; k++) {
+                    var item = json.results[k];
+                    if (typeof item === 'string') jp.push(item);
+                    else if (item && item.value) jp.push(item.value);
+                    else if (item && item.result) jp.push(item.result);
+                }
+                return jp.join('');
+            }
+            if (json && typeof json.value === 'string') {
+                dbg('JSON value type', 'string, length=' + json.value.length, 'ok');
+                return json.value;
+            }
+            dbg('JSON parsed but no recognized result field', JSON.stringify(Object.keys(json || {})), 'warn');
+        } catch(e) {
+            dbg('JSON parse failed', e.message + ' — trying XML', 'warn');
+        }
+
+        try {
+            var parser = new DOMParser();
+            var xmlDoc = parser.parseFromString(responseText, 'text/xml');
+            if (!xmlDoc.getElementsByTagName('parsererror').length) {
+                var answers = xmlDoc.getElementsByTagName('Answer');
+                if (answers.length > 0) {
+                    var parts = [];
+                    for (var i = 0; i < answers.length; i++) parts.push(answers[i].textContent || '');
+                    dbg('XML Answer elements found', answers.length, 'ok');
+                    return parts.join('');
+                }
+            }
+        } catch(e2) {
+            dbg('XML parse also failed', e2.message, 'warn');
+        }
+
+        dbg('Returning raw response text as fallback', responseText.length + ' chars', 'warn');
+        return responseText;
+    }
+
+    function tryFetchRelevance(relevanceExpr, callback, errorCallback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/json/relevance', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.timeout = 600000; // 10 minutes
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                dbg('XHR readyState=4', 'HTTP ' + xhr.status);
+                if (xhr.status === 200 && xhr.responseText) {
+                    var result = extractResultText(xhr.responseText);
+                    if (result && typeof result === 'object' && result.error) {
+                        if (errorCallback) errorCallback('Relevance error: ' + result.error);
+                    } else {
+                        callback(typeof result === 'string' ? result : '');
+                    }
+                } else {
+                    var msg = 'HTTP ' + xhr.status;
+                    if (xhr.status === 0)   msg = 'Network error — request may have been blocked or the session expired';
+                    else if (xhr.status === 401 || xhr.status === 403) msg = 'Session expired — please refresh the page and log in again';
+                    else if (xhr.status === 404) msg = 'API endpoint /json/relevance not found';
+                    dbg('XHR error', msg, 'err');
+                    if (errorCallback) errorCallback(msg);
+                }
+            }
+        };
+
+        xhr.ontimeout = function() {
+            var msg = 'Request timed out after 10 minutes. Try a narrower date range.';
+            dbg('XHR timeout', msg, 'err');
+            if (errorCallback) errorCallback(msg);
+        };
+
+        xhr.send('expr=' + encodeURIComponent(relevanceExpr));
+    }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(title, detail) {
+        var toast = document.getElementById('loadingToast');
+        document.getElementById('toastTitle').innerText = title;
+        document.getElementById('toastDetail').innerText = detail || '';
+        toast.style.display = 'flex';
+    }
+
+    function hideToast() {
+        var toast = document.getElementById('loadingToast');
+        if (toast) toast.style.display = 'none';
+    }
+
+    function updateDataStatus(win, groupCount) {
+        var text = 'Showing actions: ' + win.label;
+        if (typeof groupCount === 'number') {
+            text += ' (' + groupCount + ' action group' + (groupCount !== 1 ? 's' : '') + ')';
+        }
+        document.getElementById('dataStatusText').innerText = text;
+    }
+
+    // ============================================================
+    // RELOAD DATA — refreshes the ACTION LIST dropdown only.
+    // Results are always fetched on-demand via Generate Report.
+    // ============================================================
+    function reloadData() {
+        var win = getWindowForValue(document.getElementById('dateRangeSelect').value);
+        var btn = document.getElementById('reloadBtn');
+
+        btn.disabled = true;
+        btn.innerText = 'Loading...';
+
+        dbgSep();
+        dbg('Reload Data', win.label);
+        showToast('Reloading Action List...', 'Fetching action groups: ' + win.label);
+
+        var actionRel = buildActionListRelevance(win);
+        dbg('Action list relevance', actionRel);
+
+        tryFetchRelevance(actionRel, function(actionResult) {
+            hideToast();
+
+            // Reset all data
+            actionGroups = {};
+            allData = [];
+            filteredData = [];
+            allDropdownItems = [];
+
+            var parsed = parseActionList(actionResult);
+
+            var groupCount = 0;
+            for (var k in actionGroups) {
+                if (actionGroups.hasOwnProperty(k)) groupCount++;
+            }
+
+            populateDropdown();
+            updateDataStatus(win, groupCount);
+
+            // Reset report view — results from prior selection are stale
+            document.getElementById('reportContent').style.display = 'none';
+            document.getElementById('noDataMsg').style.display = 'none';
+            document.getElementById('reportSubtitle').innerHTML = 'Select a Multi-Action Group to generate the deployment status report';
+
+            dbg('Reload complete', groupCount + ' groups loaded', 'ok');
+            btn.disabled = false;
+            btn.innerText = 'Reload Data';
+        }, function(errMsg) {
+            hideToast();
+            btn.disabled = false;
+            btn.innerText = 'Reload Data';
+            dbg('Reload action list FAILED', errMsg, 'err');
+            alert('Error loading action list:\n\n' + errMsg + '\n\nThe existing list is still available.');
+        });
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    function initialize() {
+        dbgSep();
+        dbg('Initializing', 'Parsing embedded action list');
+
+        var parsed = parseActionList();
+
+        var groupCount = 0;
+        for (var k in actionGroups) {
+            if (actionGroups.hasOwnProperty(k)) groupCount++;
+        }
+
+        populateDropdown();
+        updateDataStatus(getWindowForValue('30'), groupCount);
+
+        document.getElementById('reloadBtn').onclick = function() { reloadData(); };
+
+        document.getElementById('dateRangeSelect').onchange = function() {
+            var warn = document.getElementById('olderWarning');
+            if (warn) warn.style.display = (document.getElementById('dateRangeSelect').value === '3650') ? 'block' : 'none';
+        };
+
+        // --------------------------------------------------------
+        // SETTINGS PANEL — debug toggle, persisted to localStorage
+        // Default is OFF so end users never see the panel.
+        // --------------------------------------------------------
+        var STORAGE_KEY = 'mag_report_debug_enabled';
+
+        function applyDebugSetting(enabled) {
+            var panel = document.getElementById('debugPanel');
+            var chk   = document.getElementById('debugToggleChk');
+            if (panel) panel.style.display = enabled ? 'block' : 'none';
+            if (chk)   chk.checked = enabled;
+            try { localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0'); } catch(e) {}
+        }
+
+        // Read saved preference; default to disabled
+        var savedDebug = false;
+        try { savedDebug = localStorage.getItem(STORAGE_KEY) === '1'; } catch(e) {}
+        applyDebugSetting(savedDebug);
+
+        document.getElementById('debugToggleChk').onchange = function() {
+            applyDebugSetting(this.checked);
+        };
+
+        // Settings dropdown open/close
+        document.getElementById('settingsBtn').onclick = function(e) {
+            e.stopPropagation();
+            var dd = document.getElementById('settingsDropdown');
+            dd.style.display = (dd.style.display === 'none') ? 'block' : 'none';
+        };
+
+        document.addEventListener('click', function(e) {
+            var dd = document.getElementById('settingsDropdown');
+            var btn = document.getElementById('settingsBtn');
+            if (dd && btn && !btn.contains(e.target)) {
+                dd.style.display = 'none';
+            }
+        });
+
+        hideToast();
+        dbg('Init complete', groupCount + ' action groups in dropdown', groupCount > 0 ? 'ok' : 'warn');
+    }
+
+    if (document.readyState === 'loading') {
+        if (document.addEventListener) { document.addEventListener('DOMContentLoaded', initialize); }
+    } else {
+        initialize();
+    }
+})();
+</script>
+
+</body>
+</html>
+
+]]></Data>
+</BESWebReport>

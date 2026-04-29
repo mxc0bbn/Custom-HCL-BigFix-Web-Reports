@@ -1,0 +1,1180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BESWebReport>
+    <Name>MDM Correlation Status</Name>
+    <Description></Description>
+    <Type>CustomReport</Type>
+    <Category>Custom</Category>
+    <Source>Custom</Source>
+    <Data><![CDATA[
+<style>
+#reportTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#reportTable th {
+    background: linear-gradient(to bottom, #4a90e2, #357abd);
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #2d5f8d;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+#reportTable th:hover {
+    background: linear-gradient(to bottom, #5a9fe8, #4a7ac4);
+}
+
+#reportTable th.sort-asc::after {
+    content: " ▲";
+    font-size: 0.8em;
+}
+
+#reportTable th.sort-desc::after {
+    content: " ▼";
+    font-size: 0.8em;
+}
+
+#reportTable td {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+}
+
+#reportTable tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+#reportTable tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+#reportTable tr:hover {
+    background-color: #e3f2fd;
+    transition: background-color 0.3s ease;
+}
+
+.icon-cell {
+    width: 60px;
+    text-align: center;
+    padding: 10px 5px !important;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    margin: 1px;
+}
+
+.badge-native {
+    background-color: #4a90e2;
+    color: white;
+}
+
+.badge-mdm {
+    background-color: #f39c12;
+    color: white;
+}
+
+.badge-corr {
+    background-color: #50c878;
+    color: white;
+}
+
+.charts-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.chart-wrapper {
+    flex: 1;
+    min-width: 300px;
+    max-width: 450px;
+    text-align: center;
+    padding: 20px;
+    background: white;
+    border: 6px solid #4a90e2;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chart-wrapper h3 {
+    color: #357abd;
+    margin-bottom: 15px;
+    font-family: Arial, sans-serif;
+}
+
+.pie-chart {
+    width: 250px;
+    height: 250px;
+    margin: 0 auto;
+}
+
+.legend {
+    margin-top: 20px;
+    text-align: left;
+    display: inline-block;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.filter-container {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 2px solid #4a90e2;
+}
+
+.filter-container h3 {
+    color: #357abd;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-family: Arial, sans-serif;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+
+.filter-group label {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    color: #357abd;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.filter-group select {
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    min-height: 100px;
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: #4a90e2;
+}
+
+.filter-hint {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    margin-top: 3px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.filter-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.apply-filter-btn {
+    background: #4a90e2;
+    color: white;
+}
+
+.apply-filter-btn:hover {
+    background: #357abd;
+}
+
+.clear-filter-btn {
+    background: #e74c3c;
+    color: white;
+}
+
+.clear-filter-btn:hover {
+    background: #c0392b;
+}
+
+.filter-status {
+    font-family: Arial, sans-serif;
+    color: #357abd;
+    font-size: 14px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.os-cell {
+    cursor: help;
+}
+
+.icon-legend {
+    background: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+}
+
+.icon-legend h4 {
+    margin: 0 0 10px 0;
+    color: #357abd;
+    font-family: Arial, sans-serif;
+}
+
+.icon-legend-items {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.icon-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Action buttons bar ──────────────────────────────────────── */
+.action-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.action-bar button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-export-csv {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-export-csv:hover {
+    background: #1e8449;
+}
+
+.btn-print {
+    background: #7f8c8d;
+    color: white;
+}
+
+.btn-print:hover {
+    background: #626a6a;
+}
+
+/* ── Computer name link ──────────────────────────────────────── */
+.computer-link {
+    color: #357abd;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.computer-link:hover {
+    text-decoration: underline;
+    color: #1a5276;
+}
+
+/* ── Settings button ─────────────────────────────────────────── */
+.btn-settings {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-settings:hover {
+    background: #545b62;
+}
+
+/* ── Config overlay ──────────────────────────────────────────── */
+.config-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.config-overlay.visible {
+    display: flex;
+}
+
+.config-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border: 3px solid #4a90e2;
+    padding: 30px;
+    width: 480px;
+    max-width: 90%;
+    font-family: Arial, sans-serif;
+}
+
+.config-panel h3 {
+    color: #357abd;
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.config-description {
+    color: #666;
+    font-size: 13px;
+    margin: 0 0 20px 0;
+    line-height: 1.4;
+}
+
+.config-field {
+    margin-bottom: 20px;
+}
+
+.config-field label {
+    display: block;
+    font-weight: bold;
+    color: #357abd;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.config-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.config-field input:focus {
+    outline: none;
+    border-color: #4a90e2;
+}
+
+.config-hint {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.config-current {
+    font-size: 13px;
+    color: #155724;
+    background: #d4edda;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.config-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.config-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.config-save-btn {
+    background: #4a90e2;
+    color: white;
+}
+
+.config-save-btn:hover {
+    background: #357abd;
+}
+
+.config-cancel-btn {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.config-cancel-btn:hover {
+    background: #dee2e6;
+}
+
+/* ── Print styles ────────────────────────────────────────────── */
+@media print {
+    .action-bar,
+    .filter-container,
+    .icon-legend,
+    .config-overlay {
+        display: none !important;
+    }
+
+    .charts-container {
+        page-break-inside: avoid;
+    }
+
+    #reportTable tr {
+        page-break-inside: avoid;
+    }
+
+    body {
+        font-size: 11px;
+    }
+}
+</style>
+
+<div class="icon-legend">
+    <h4>Badge Legend:</h4>
+    <div class="icon-legend-items">
+        <div class="icon-legend-item">
+            <span class="badge badge-native">NAT</span>
+            <span>Native Agent</span>
+        </div>
+        <div class="icon-legend-item">
+            <span class="badge badge-mdm">MDM</span>
+            <span>MDM/Proxy Agent</span>
+        </div>
+        <div class="icon-legend-item">
+            <span class="badge badge-corr">COR</span>
+            <span>Correlated</span>
+        </div>
+    </div>
+</div>
+
+<!-- ── Action buttons bar — now above charts, matching Patch Compliance layout ── -->
+<div class="action-bar">
+    <button class="btn-settings" id="settingsBtn">&#9881; Settings</button>
+    <button class="btn-export-csv" onclick="exportCSV()">Export CSV</button>
+    <button class="btn-print" onclick="window.print()">Print Report</button>
+</div>
+
+<div class="charts-container">
+    <div class="chart-wrapper">
+        <h3>Agent Type Distribution</h3>
+        <svg id="agentTypeChart" class="pie-chart" viewBox="0 0 100 100"></svg>
+        <div id="agentTypeLegend" class="legend"></div>
+    </div>
+    <div class="chart-wrapper">
+        <h3>Operating System Distribution</h3>
+        <svg id="osChart" class="pie-chart" viewBox="0 0 100 100"></svg>
+        <div id="osLegend" class="legend"></div>
+    </div>
+    <div class="chart-wrapper">
+        <h3>Correlation Status</h3>
+        <svg id="correlatedChart" class="pie-chart" viewBox="0 0 100 100"></svg>
+        <div id="correlatedLegend" class="legend"></div>
+    </div>
+</div>
+
+<div class="filter-container">
+    <h3>Filter Results</h3>
+    <div class="filter-controls">
+        <div class="filter-group">
+            <label for="filterAgentType">Agent Type:</label>
+            <select id="filterAgentType" multiple size="5"></select>
+            <span class="filter-hint">Hold Ctrl (or Cmd) to select multiple</span>
+        </div>
+        <div class="filter-group">
+            <label for="filterOS">Operating System:</label>
+            <select id="filterOS" multiple size="5"></select>
+            <span class="filter-hint">Hold Ctrl (or Cmd) to select multiple</span>
+        </div>
+        <div class="filter-group">
+            <label for="filterCorrelated">Correlated:</label>
+            <select id="filterCorrelated" multiple size="3"></select>
+            <span class="filter-hint">Hold Ctrl (or Cmd) to select multiple</span>
+        </div>
+        <div class="filter-buttons">
+            <button class="apply-filter-btn" onclick="applyFilters()">Apply Filters</button>
+            <button class="clear-filter-btn" onclick="clearFilters()">Clear All</button>
+        </div>
+    </div>
+    <div id="filterStatus" class="filter-status"></div>
+</div>
+
+<!-- Settings overlay -->
+<div class="config-overlay" id="configOverlay">
+    <div class="config-panel">
+        <h3>&#9881; Report Configuration</h3>
+        <p class="config-description">Configure settings used by this report. Changes are saved in your browser and persist across sessions.</p>
+        <div class="config-field">
+            <label for="configDatasource">Web Reports Datasource Name:</label>
+            <input type="text" id="configDatasource" placeholder="e.g., VDIANA">
+            <div class="config-hint">Found under Web Reports &gt; Administration &gt; Datasource Settings. Used to build computer detail links.</div>
+            <div class="config-current" id="configCurrentValue"></div>
+        </div>
+        <div class="config-buttons">
+            <button type="button" class="config-cancel-btn" id="configCancelBtn">Cancel</button>
+            <button type="button" class="config-save-btn" id="configSaveBtn">Save Settings</button>
+        </div>
+    </div>
+</div>
+
+<table border="all" id="reportTable">
+<?relevance tr of (concatenation of ths of ("Type";"Computer Name";"Computer ID";"Agent Type";"Operating System";"Correlated";"Last Report Time")) ?>
+<?relevance concatenation of trs of (td of "" & td of (name of it as string) & td of (id of it as string) & td of (agent type of it as string) & td of (operating system of it as string) & td of (correlation flag of it as string) & td of (last report time of it as string)) of bes computers whose ((agent type of it contains "Native" OR agent type of it contains "MDM") AND (operating system of it as string contains "Win10" OR operating system of it as string contains "Win11" OR operating system of it as string contains "MacOS"))
+?>
+</table>
+
+<script type="text/javascript">
+(function() {
+    var currentSortColumn = 1;
+    var currentSortDirection = 'asc';
+
+    var wrDatasourceDefault = 'VDIANA';
+    var wrDatasource = wrDatasourceDefault;
+
+    try {
+        var saved = localStorage.getItem('mdmCorrReport_datasource');
+        if (saved) wrDatasource = saved;
+    } catch(e) {}
+
+    function buildComputerURL(computerID) {
+        return '/webreports?page=SingleComputerReport&ComputerName=' + wrDatasource + '/' + computerID + '&IsTranslated=1';
+    }
+
+    function openSettings() {
+        var overlay = document.getElementById('configOverlay');
+        var input   = document.getElementById('configDatasource');
+        var current = document.getElementById('configCurrentValue');
+        input.value = wrDatasource;
+        current.textContent = 'Current value: ' + wrDatasource;
+        overlay.className = 'config-overlay visible';
+        input.focus();
+        input.select();
+    }
+
+    function closeSettings() {
+        document.getElementById('configOverlay').className = 'config-overlay';
+    }
+
+    function saveSettings() {
+        var input    = document.getElementById('configDatasource');
+        var newValue = (input.value || '').replace(/^\s+|\s+$/g, '');
+        if (!newValue) {
+            input.style.borderColor = '#e74c3c';
+            input.focus();
+            return;
+        }
+        wrDatasource = newValue;
+        try { localStorage.setItem('mdmCorrReport_datasource', newValue); } catch(e) {}
+        rebuildComputerLinks();
+        closeSettings();
+    }
+
+    function rebuildComputerLinks() {
+        var table = document.getElementById('reportTable');
+        if (!table || !table.rows) return;
+        for (var i = 1; i < table.rows.length; i++) {
+            var row  = table.rows[i];
+            if (!row.cells || row.cells.length < 3) continue;
+            var idCell = row.cells[2];
+            var computerID = (idCell.textContent || idCell.innerText || '').replace(/^\s+|\s+$/g, '');
+            if (!computerID) continue;
+            var nameCell = row.cells[1];
+            var link = nameCell.getElementsByTagName('a')[0];
+            if (link) {
+                link.href = buildComputerURL(computerID);
+            }
+        }
+    }
+
+    function simplifyOSName(fullOSName) {
+        var osLower = (fullOSName || '').toLowerCase();
+        if (osLower.indexOf('win10') !== -1 || osLower.indexOf('windows 10') !== -1) {
+            return 'Windows 10';
+        } else if (osLower.indexOf('win11') !== -1 || osLower.indexOf('windows 11') !== -1) {
+            return 'Windows 11';
+        } else if (osLower.indexOf('macos') !== -1 || osLower.indexOf('mac os') !== -1) {
+            return 'MacOS';
+        }
+        return fullOSName;
+    }
+
+    function addBadgesToTable() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 2) return;
+
+        for (var i = 1; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            if (row.cells && row.cells.length >= 6) {
+                var badgeCell      = row.cells[0];
+                var nameCell       = row.cells[1];
+                var idCell         = row.cells[2];
+                var agentTypeCell  = row.cells[3];
+                var correlatedCell = row.cells[5];
+
+                badgeCell.className = 'icon-cell';
+
+                var agentType  = (agentTypeCell.textContent  || agentTypeCell.innerText  || '').replace(/^\s+|\s+$/g, '');
+                var correlated = (correlatedCell.textContent || correlatedCell.innerText || '').replace(/^\s+|\s+$/g, '');
+                var computerID = (idCell.textContent         || idCell.innerText         || '').replace(/^\s+|\s+$/g, '');
+                var computerName = (nameCell.textContent     || nameCell.innerText       || '').replace(/^\s+|\s+$/g, '');
+
+                var badges = '';
+                var agentTypeLower = agentType.toLowerCase();
+
+                if (agentTypeLower.indexOf('native') !== -1) {
+                    badges += '<span class="badge badge-native" title="Native Agent">NAT</span>';
+                    if (correlated === 'True') {
+                        badges += '<span class="badge badge-corr" title="Correlated">COR</span>';
+                    }
+                } else if (agentTypeLower.indexOf('proxy') !== -1 || agentTypeLower.indexOf('mdm') !== -1) {
+                    badges += '<span class="badge badge-mdm" title="MDM/Proxy Agent">MDM</span>';
+                }
+
+                badgeCell.innerHTML = badges;
+
+                if (computerID) {
+                    var url = buildComputerURL(computerID);
+                    nameCell.innerHTML = '<a class="computer-link" href="' + url + '" target="_blank" title="Open BigFix Web Reports for ' + computerName + '">' + computerName + '</a>';
+                }
+            }
+        }
+    }
+
+    function normalizeTableOS() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 2) return;
+
+        for (var i = 1; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            if (row.cells && row.cells.length >= 5) {
+                var osCell = row.cells[4];
+                var fullOSName = osCell.textContent || osCell.innerText || '';
+                var simplifiedName = simplifyOSName(fullOSName);
+
+                osCell.setAttribute('title', 'Full version: ' + fullOSName);
+                osCell.className = 'os-cell';
+                osCell.textContent = simplifiedName;
+            }
+        }
+    }
+
+    function sortTableByColumn(columnIndex) {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 2) return;
+        if (columnIndex === 0) return;
+
+        var rowsArray = [];
+        for (var i = 1; i < table.rows.length; i++) {
+            if (table.rows[i].style.display !== 'none') {
+                rowsArray.push(table.rows[i]);
+            }
+        }
+
+        var headers = table.rows[0].cells;
+
+        if (currentSortColumn === columnIndex) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortDirection = 'asc';
+            currentSortColumn = columnIndex;
+        }
+
+        for (var i = 0; i < headers.length; i++) {
+            headers[i].className = (headers[i].className || '').replace(/\s*sort-asc\s*/g, '').replace(/\s*sort-desc\s*/g, '');
+        }
+
+        headers[columnIndex].className = (headers[columnIndex].className || '') + ' ' + (currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+
+        rowsArray.sort(function(a, b) {
+            var aValue = (a.cells[columnIndex].textContent || a.cells[columnIndex].innerText || '').replace(/^\s+|\s+$/g, '');
+            var bValue = (b.cells[columnIndex].textContent || b.cells[columnIndex].innerText || '').replace(/^\s+|\s+$/g, '');
+
+            var aNum = parseFloat(aValue.replace(/,/g, ''));
+            var bNum = parseFloat(bValue.replace(/,/g, ''));
+
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return currentSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+            } else {
+                var comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+                return currentSortDirection === 'asc' ? comparison : -comparison;
+            }
+        });
+
+        for (var i = 0; i < rowsArray.length; i++) {
+            table.appendChild(rowsArray[i]);
+        }
+    }
+
+    function initializeSorting() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 1) return;
+
+        var headers = table.rows[0].cells;
+
+        for (var i = 0; i < headers.length; i++) {
+            (function(index) {
+                var header = headers[index];
+                if (header.addEventListener && index !== 0) {
+                    header.addEventListener('click', function() { sortTableByColumn(index); });
+                }
+            })(i);
+        }
+
+        headers[1].className = (headers[1].className || '') + ' sort-asc';
+    }
+
+    function populateFilterDropdowns() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 2) return;
+
+        var agentTypes = {}, operatingSystems = {}, correlatedValues = {};
+
+        for (var i = 1; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            if (row.cells && row.cells.length >= 6) {
+                var agentType  = (row.cells[3].textContent || '').replace(/^\s+|\s+$/g, '');
+                var os         = (row.cells[4].textContent || '').replace(/^\s+|\s+$/g, '');
+                var correlated = (row.cells[5].textContent || '').replace(/^\s+|\s+$/g, '');
+
+                if (agentType)  agentTypes[agentType]           = true;
+                if (os)         operatingSystems[os]            = true;
+                if (correlated) correlatedValues[correlated]    = true;
+            }
+        }
+
+        function populateSelect(selectId, dataObj) {
+            var select = document.getElementById(selectId);
+            var keys = [];
+            for (var key in dataObj) {
+                if (dataObj.hasOwnProperty(key)) keys.push(key);
+            }
+            keys.sort();
+            for (var i = 0; i < keys.length; i++) {
+                var option = document.createElement('option');
+                option.value = keys[i];
+                option.textContent = keys[i];
+                select.appendChild(option);
+            }
+        }
+
+        populateSelect('filterAgentType', agentTypes);
+        populateSelect('filterOS', operatingSystems);
+        populateSelect('filterCorrelated', correlatedValues);
+    }
+
+    function getSelectedValues(selectId) {
+        var select = document.getElementById(selectId);
+        var selectedValues = [];
+        if (!select || !select.options) return selectedValues;
+
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].selected) {
+                selectedValues.push(select.options[i].value);
+            }
+        }
+        return selectedValues;
+    }
+
+    window.applyFilters = function() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 2) return;
+
+        var agentTypeFilters   = getSelectedValues('filterAgentType');
+        var osFilters          = getSelectedValues('filterOS');
+        var correlatedFilters  = getSelectedValues('filterCorrelated');
+
+        var visibleCount = 0, totalCount = 0;
+
+        for (var i = 1; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            totalCount++;
+
+            if (row.cells && row.cells.length >= 6) {
+                var agentType  = (row.cells[3].textContent || '').replace(/^\s+|\s+$/g, '');
+                var os         = (row.cells[4].textContent || '').replace(/^\s+|\s+$/g, '');
+                var correlated = (row.cells[5].textContent || '').replace(/^\s+|\s+$/g, '');
+
+                var showRow = true;
+
+                if (agentTypeFilters.length  > 0 && agentTypeFilters.indexOf(agentType)   === -1) showRow = false;
+                if (osFilters.length         > 0 && osFilters.indexOf(os)                 === -1) showRow = false;
+                if (correlatedFilters.length > 0 && correlatedFilters.indexOf(correlated) === -1) showRow = false;
+
+                row.style.display = showRow ? '' : 'none';
+                if (showRow) visibleCount++;
+            }
+        }
+
+        var filterStatus  = document.getElementById('filterStatus');
+        var activeFilters = [];
+
+        if (agentTypeFilters.length  > 0) activeFilters.push('Agent Type: ' + agentTypeFilters.join(', '));
+        if (osFilters.length         > 0) activeFilters.push('OS: ' + osFilters.join(', '));
+        if (correlatedFilters.length > 0) activeFilters.push('Correlated: ' + correlatedFilters.join(', '));
+
+        if (activeFilters.length > 0) {
+            filterStatus.textContent = 'Showing ' + visibleCount + ' of ' + totalCount + ' records | Active filters: ' + activeFilters.join(' | ');
+        } else {
+            filterStatus.textContent = 'Showing all ' + totalCount + ' records (no filters applied)';
+        }
+
+        createCharts();
+    };
+
+    window.clearFilters = function() {
+        document.getElementById('filterAgentType').selectedIndex  = -1;
+        document.getElementById('filterOS').selectedIndex         = -1;
+        document.getElementById('filterCorrelated').selectedIndex = -1;
+        window.applyFilters();
+    };
+
+    window.exportCSV = function() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 1) return;
+
+        var csvRows = [];
+
+        var headers = table.rows[0].cells;
+        var headerCols = [];
+        for (var h = 1; h < headers.length; h++) {
+            headerCols.push('"' + (headers[h].textContent || '').replace(/"/g, '""').replace(/^\s+|\s+$/g, '') + '"');
+        }
+        csvRows.push(headerCols.join(','));
+
+        for (var i = 1; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            if (row.style.display === 'none') continue;
+
+            var cols = [];
+            for (var c = 1; c < row.cells.length; c++) {
+                var cellText = (row.cells[c].textContent || row.cells[c].innerText || '').replace(/^\s+|\s+$/g, '').replace(/"/g, '""');
+                cols.push('"' + cellText + '"');
+            }
+            csvRows.push(cols.join(','));
+        }
+
+        var csvContent = csvRows.join('\r\n');
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        var now = new Date();
+        var ts  = now.getFullYear() + '-'
+                + ('0' + (now.getMonth() + 1)).slice(-2) + '-'
+                + ('0' + now.getDate()).slice(-2);
+        var filename = 'MDM_Correlation_Report_' + ts + '.csv';
+
+        if (navigator.msSaveBlob) {
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            var link = document.createElement('a');
+            var url  = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        }
+    };
+
+    // Color helper for 3D pie side walls
+    function darkenColor(hex, factor) {
+        var h = (hex || '').replace('#', '');
+        if (h.length !== 6) return hex;
+        var r = parseInt(h.substring(0, 2), 16);
+        var g = parseInt(h.substring(2, 4), 16);
+        var b = parseInt(h.substring(4, 6), 16);
+        r = Math.max(0, Math.round(r * (1 - factor)));
+        g = Math.max(0, Math.round(g * (1 - factor)));
+        b = Math.max(0, Math.round(b * (1 - factor)));
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    // 3D pie: squashed ellipse with darkened side wall on the front-half slices
+    function createPieChart(svgId, legendId, data, colors) {
+        var svg    = document.getElementById(svgId);
+        var legend = document.getElementById(legendId);
+
+        if (!svg || !legend) return;
+
+        svg.innerHTML    = '';
+        legend.innerHTML = '';
+
+        var total = 0, labels = [], values = [];
+
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                labels.push(key);
+                values.push(data[key]);
+                total += data[key];
+            }
+        }
+
+        if (total === 0) return;
+
+        // Squashed-ellipse geometry inside the 100x100 viewBox
+        var cx = 50, cy = 44, rx = 42, ry = 21, depth = 10;
+
+        var wallFragment = document.createDocumentFragment();
+        var topFragment = document.createDocumentFragment();
+        var legendFragment = document.createDocumentFragment();
+
+        // Single-slice case: full ellipse top + front half wall
+        if (labels.length === 1) {
+            var color = colors[0];
+
+            var swx1 = cx + rx, swy1 = cy;
+            var swx2 = cx - rx, swy2 = cy;
+            var sWallPath =
+                'M ' + swx1 + ' ' + swy1 +
+                ' L ' + swx1 + ' ' + (swy1 + depth) +
+                ' A ' + rx + ' ' + ry + ' 0 0 1 ' + swx2 + ' ' + (swy2 + depth) +
+                ' L ' + swx2 + ' ' + swy2 +
+                ' A ' + rx + ' ' + ry + ' 0 0 0 ' + swx1 + ' ' + swy1 +
+                ' Z';
+
+            var sWallEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            sWallEl.setAttribute('d', sWallPath);
+            sWallEl.setAttribute('fill', darkenColor(color, 0.28));
+            sWallEl.setAttribute('stroke', 'white');
+            sWallEl.setAttribute('stroke-width', '0.5');
+            sWallEl.setAttribute('pointer-events', 'none');
+            wallFragment.appendChild(sWallEl);
+
+            var topEll = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            topEll.setAttribute('cx', cx);
+            topEll.setAttribute('cy', cy);
+            topEll.setAttribute('rx', rx);
+            topEll.setAttribute('ry', ry);
+            topEll.setAttribute('fill', color);
+            topEll.setAttribute('stroke', 'white');
+            topEll.setAttribute('stroke-width', '0.5');
+
+            var sTitle = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            sTitle.textContent = labels[0] + ': ' + values[0] + ' (100.0%)';
+            topEll.appendChild(sTitle);
+            topFragment.appendChild(topEll);
+
+            var sLegItem = document.createElement('div');
+            sLegItem.className = 'legend-item';
+            sLegItem.innerHTML = '<div class="legend-color" style="background-color: ' + color + '"></div>'
+                + '<span>' + labels[0] + ': ' + values[0] + ' (100.0%)</span>';
+            legendFragment.appendChild(sLegItem);
+
+            svg.appendChild(wallFragment);
+            svg.appendChild(topFragment);
+            legend.appendChild(legendFragment);
+            return;
+        }
+
+        // Multi-slice: build slice descriptors first
+        var slices = [];
+        var currentAngle = -90;
+
+        for (var i = 0; i < labels.length; i++) {
+            var value = values[i];
+            var percentage = (value / total) * 100;
+            var sliceAngle = (value / total) * 360;
+            var startAngle = currentAngle * Math.PI / 180;
+            var endAngle = (currentAngle + sliceAngle) * Math.PI / 180;
+
+            slices.push({
+                label: labels[i],
+                value: value,
+                percentage: percentage,
+                color: colors[i % colors.length],
+                startAngle: startAngle,
+                endAngle: endAngle,
+                sliceAngle: sliceAngle
+            });
+
+            currentAngle += sliceAngle;
+        }
+
+        // Pass 1: side walls (only for slice ranges that intersect [0, PI] in screen-coord angles - the front half)
+        for (var w = 0; w < slices.length; w++) {
+            var sw = slices[w];
+            var wallStart = Math.max(sw.startAngle, 0);
+            var wallEnd = Math.min(sw.endAngle, Math.PI);
+
+            if (wallStart < wallEnd) {
+                var wx1 = cx + rx * Math.cos(wallStart);
+                var wy1 = cy + ry * Math.sin(wallStart);
+                var wx2 = cx + rx * Math.cos(wallEnd);
+                var wy2 = cy + ry * Math.sin(wallEnd);
+                var wallLargeArc = (wallEnd - wallStart) > Math.PI ? 1 : 0;
+
+                var wallPath =
+                    'M ' + wx1 + ' ' + wy1 +
+                    ' L ' + wx1 + ' ' + (wy1 + depth) +
+                    ' A ' + rx + ' ' + ry + ' 0 ' + wallLargeArc + ' 1 ' + wx2 + ' ' + (wy2 + depth) +
+                    ' L ' + wx2 + ' ' + wy2 +
+                    ' A ' + rx + ' ' + ry + ' 0 ' + wallLargeArc + ' 0 ' + wx1 + ' ' + wy1 +
+                    ' Z';
+
+                var wallEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                wallEl.setAttribute('d', wallPath);
+                wallEl.setAttribute('fill', darkenColor(sw.color, 0.28));
+                wallEl.setAttribute('stroke', 'white');
+                wallEl.setAttribute('stroke-width', '0.5');
+                wallEl.setAttribute('pointer-events', 'none');
+                wallFragment.appendChild(wallEl);
+            }
+        }
+
+        // Pass 2: top faces
+        for (var t = 0; t < slices.length; t++) {
+            var st = slices[t];
+            var x1 = cx + rx * Math.cos(st.startAngle);
+            var y1 = cy + ry * Math.sin(st.startAngle);
+            var x2 = cx + rx * Math.cos(st.endAngle);
+            var y2 = cy + ry * Math.sin(st.endAngle);
+            var largeArc = st.sliceAngle > 180 ? 1 : 0;
+            var topPath = 'M ' + cx + ' ' + cy + ' L ' + x1 + ' ' + y1 + ' A ' + rx + ' ' + ry + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z';
+
+            var topEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            topEl.setAttribute('d', topPath);
+            topEl.setAttribute('fill', st.color);
+            topEl.setAttribute('stroke', 'white');
+            topEl.setAttribute('stroke-width', '0.5');
+
+            var tt = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            tt.textContent = st.label + ': ' + st.value + ' (' + st.percentage.toFixed(1) + '%)';
+            topEl.appendChild(tt);
+            topFragment.appendChild(topEl);
+
+            var legItem = document.createElement('div');
+            legItem.className = 'legend-item';
+            legItem.innerHTML = '<div class="legend-color" style="background-color: ' + st.color + '"></div>'
+                + '<span>' + st.label + ': ' + st.value + ' (' + st.percentage.toFixed(1) + '%)</span>';
+            legendFragment.appendChild(legItem);
+        }
+
+        svg.appendChild(wallFragment);
+        svg.appendChild(topFragment);
+        legend.appendChild(legendFragment);
+    }
+
+    function createCharts() {
+        var table = document.getElementById("reportTable");
+        if (!table || !table.rows || table.rows.length < 2) return;
+
+        var agentTypes = {}, operatingSystems = {}, correlatedStatus = {};
+
+        for (var i = 1; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            if (row.style.display === 'none') continue;
+
+            if (row.cells && row.cells.length >= 6) {
+                var agentType  = (row.cells[3].textContent || '').replace(/^\s+|\s+$/g, '');
+                var os         = (row.cells[4].textContent || '').replace(/^\s+|\s+$/g, '');
+                var correlated = (row.cells[5].textContent || '').replace(/^\s+|\s+$/g, '');
+
+                if (agentType) agentTypes[agentType] = (agentTypes[agentType] || 0) + 1;
+                if (os)        operatingSystems[os]  = (operatingSystems[os]  || 0) + 1;
+                if (correlated === 'True' || correlated === 'False') {
+                    correlatedStatus[correlated] = (correlatedStatus[correlated] || 0) + 1;
+                }
+            }
+        }
+
+        var agentColors      = ['#4a90e2', '#50c878', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c'];
+        var osColors         = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+        var correlatedColors = ['#50c878', '#e74c3c'];
+
+        createPieChart('agentTypeChart',   'agentTypeLegend',   agentTypes,      agentColors);
+        createPieChart('osChart',          'osLegend',          operatingSystems, osColors);
+        createPieChart('correlatedChart',  'correlatedLegend',  correlatedStatus, correlatedColors);
+    }
+
+    function bindSettingsHandlers() {
+        var settingsBtn     = document.getElementById('settingsBtn');
+        var configSaveBtn   = document.getElementById('configSaveBtn');
+        var configCancelBtn = document.getElementById('configCancelBtn');
+        var configOverlay   = document.getElementById('configOverlay');
+        var configInput     = document.getElementById('configDatasource');
+
+        if (settingsBtn)     settingsBtn.onclick     = function() { openSettings();  return false; };
+        if (configSaveBtn)   configSaveBtn.onclick   = function() { saveSettings();  return false; };
+        if (configCancelBtn) configCancelBtn.onclick = function() { closeSettings(); return false; };
+
+        if (configOverlay) configOverlay.onclick = function(e) {
+            if (e.target === configOverlay) closeSettings();
+        };
+
+        if (configInput) configInput.onkeydown = function(e) {
+            if (e.keyCode === 13) { saveSettings(); return false; }
+            this.style.borderColor = '#ddd';
+        };
+    }
+
+    function initializeReport() {
+        setTimeout(function() {
+            normalizeTableOS();
+            addBadgesToTable();
+            populateFilterDropdowns();
+            createCharts();
+            sortTableByColumn(1);
+            initializeSorting();
+            window.applyFilters();
+            bindSettingsHandlers();
+        }, 500);
+    }
+
+    if (document.readyState === 'loading') {
+        if (document.addEventListener) {
+            document.addEventListener('DOMContentLoaded', initializeReport);
+        }
+    } else {
+        initializeReport();
+    }
+})();
+</script>
+
+]]></Data>
+</BESWebReport>

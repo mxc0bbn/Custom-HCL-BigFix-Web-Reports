@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BES xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="BES.xsd">
+	<Analysis>
+		<Title>Relay Cache Inventory</Title>
+		<Description><![CDATA[<P><STRONG>Created by Mike Consuegra - HCL Professional Services.</STRONG></P>
+<P><STRONG>This analysis feeds a Web Report called "Relay Cache File Analysis" which pulls data from the properties in this analysis.&nbsp; If the analysis is deactivated or deleted, the report will not contain data.</STRONG></P>]]></Description>
+		<Relevance>exists main gather service or exists relay service</Relevance>
+		<Source>Internal</Source>
+		<SourceReleaseDate>2026-01-23</SourceReleaseDate>
+		<MIMEField>
+			<Name>x-fixlet-modification-time</Name>
+			<Value>Wed, 15 Apr 2026 15:44:31 +0000</Value>
+		</MIMEField>
+		<Domain>BESC</Domain>
+		<Property Name="Server Type" ID="1" EvaluationPeriod="PT1H">if (name of operating system starts with "Win") then (if exists service "BESRootServer" then "Root Server" else if exists service "BESRelay" then "Relay" else "Not Applicable") else (if exists folder "/var/opt/BESRelay" then "Relay" else "Not Applicable")</Property>
+		<Property Name="Relay Cache Path" ID="2" EvaluationPeriod="PT1H"><![CDATA[if exists service "BESRootServer" then ((value "EnterpriseServerFolder" of key "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\BigFix\Enterprise Server" of registry as string) & "wwwrootbes\bfmirror\downloads\sha1") else if exists setting "_BESRelay_HTTPServer_ServerRootPath" of client then (pathname of folder "bfmirror/downloads/sha1" of folder (value of setting "_BESRelay_HTTPServer_ServerRootPath" of client as string)) else "N/A"]]></Property>
+		<Property Name="Files in Relay Cache" ID="3" EvaluationPeriod="PT1H"><![CDATA[if exists service "BESRootServer" then ((name of it & "|" & (modification time of it as string) & "|" & (size of it as string)) of files of folder ((value "EnterpriseServerFolder" of key "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\BigFix\Enterprise Server" of registry as string) & "wwwrootbes\bfmirror\downloads\sha1")) else if exists setting "_BESRelay_HTTPServer_ServerRootPath" of client then ((name of it & "|" & (modification time of it as string) & "|" & (size of it as string)) of files of folder "bfmirror/downloads/sha1" of folder (value of setting "_BESRelay_HTTPServer_ServerRootPath" of client as string)) else "N/A"]]></Property>
+		<Property Name="Number of Files in Relay Cache" ID="4" EvaluationPeriod="PT1H"><![CDATA[if exists service "BESRootServer" then (number of files of folder ((value "EnterpriseServerFolder" of key "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\BigFix\Enterprise Server" of registry as string) & "wwwrootbes\bfmirror\downloads\sha1")) else if exists setting "_BESRelay_HTTPServer_ServerRootPath" of client then (number of files of folder "bfmirror/downloads/sha1" of folder (value of setting "_BESRelay_HTTPServer_ServerRootPath" of client as string)) else 0]]></Property>
+		<Property Name="Total size of Relay Cache" ID="5" EvaluationPeriod="PT1H"><![CDATA[if exists service "BESRootServer" then ((sum of sizes of files of folder ((value "EnterpriseServerFolder" of key "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\BigFix\Enterprise Server" of registry as string) & "wwwrootbes\bfmirror\downloads\sha1")) / 1048576) else if exists setting "_BESRelay_HTTPServer_ServerRootPath" of client then ((sum of sizes of files of folder "bfmirror/downloads/sha1" of folder (value of setting "_BESRelay_HTTPServer_ServerRootPath" of client as string)) / 1048576) else 0]]></Property>
+	</Analysis>
+</BES>
+
